@@ -1,15 +1,17 @@
 ﻿namespace Taskiea.Core.Results;
 
-public sealed class CreateResult<T> where T : IDataObject
+public class GetSingleResult<T> where T : IDataObject
 {
     public ResultCode ResultCode { get; init; }
+    public uint Id { get; init; }
     public T? DataObject { get; init; }
     public string ErrorMessage { get; init; } = "";
 
-    public CreateResult() { }
-    public CreateResult(ResultCode resultCode, T? dataObject, string errorMessage = "")
+    public GetSingleResult() { }
+    public GetSingleResult(ResultCode resultCode, uint id, T? dataObject, string errorMessage = "")
     {
         ResultCode = resultCode;
+        Id = id;
         ErrorMessage = errorMessage;
         DataObject = dataObject;
     }

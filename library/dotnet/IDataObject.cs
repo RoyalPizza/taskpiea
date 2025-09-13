@@ -2,5 +2,5 @@
 
 public interface IDataObject
 {
-
+    public uint GetId();
 }

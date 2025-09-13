@@ -9,4 +9,6 @@ public sealed class TaskItem : IDataObject
     public string Description { get; set; } = "";
 
     public Status Status { get; set; }
+
+    public uint GetId() => Id;
 }

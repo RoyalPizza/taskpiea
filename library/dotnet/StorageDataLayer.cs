@@ -2,10 +2,10 @@
 
 namespace Taskiea.Core;
 
-public abstract class StorageDataLayer<T> where T : IDataObject
+public abstract class StorageDataLayer<T> : IDataLayer<T> where T : IDataObject
 {
     protected readonly string _connectionString;
-    
+
     public StorageDataLayer(string connectionString)
     {
         _connectionString = connectionString;
@@ -14,15 +14,15 @@ public abstract class StorageDataLayer<T> where T : IDataObject
     public abstract void Initialize();
 
     // standard CRUD ops
-    public abstract Task<CreateResult<T>> CreateAsync(T dataObject);
-    public abstract Task<DeleteResult> DeleteAsync(T dataObject);
-    public abstract Task<UpdateResult<T>> UpdateAsync(T dataObject);
+    public abstract Task<CreateResult<T>> CreateAsync(T dataObject, CancellationToken cancellationToken);
+    public abstract Task<DeleteResult> DeleteAsync(uint id, CancellationToken cancellationToken);
+    public abstract Task<UpdateResult<T>> UpdateAsync(T dataObject, CancellationToken cancellationToken);
 
     // validation is seperate so the client can call it without doing the full operation
-    public abstract Task<ValidateResult> ValidateCreateAsync(T dataObject);
-    public abstract Task<ValidateResult> ValidateUpdateAsync(T dataObject);
+    public abstract Task<ValidateResult> ValidateCreateAsync(T dataObject, CancellationToken cancellationToken);
+    public abstract Task<ValidateResult> ValidateUpdateAsync(T dataObject, CancellationToken cancellationToken);
 
     // TODO: The gets do not use result wrappers. Decide if this is good or bad
-    public abstract Task<T> GetSingleAsync(uint id);
-    public abstract Task<List<T>> GetAllAsync();
+    public abstract Task<GetSingleResult<T>> GetSingleAsync(uint id, CancellationToken cancellationToken);
+    public abstract Task<GetManyResult<T>> GetAllAsync(CancellationToken cancellationToken);
 }
