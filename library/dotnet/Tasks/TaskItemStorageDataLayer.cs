@@ -1,0 +1,166 @@
+﻿using Microsoft.Data.Sqlite;
+using Taskiea.Core;
+using Taskiea.Core.Results;
+using Taskiea.Core.Tasks;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+
+namespace Taskiea.Core;
+
+public sealed class TaskStorageDataLayer : StorageDataLayer<TaskItem>
+{
+    public TaskStorageDataLayer(string connectionString) : base(connectionString)
+    {
+    }
+
+    public override void Initialize()
+    {
+        using var connection = new SqliteConnection(_connectionString);
+        connection.Open();
+        var command = connection.CreateCommand();
+        command.CommandText = @"
+            CREATE TABLE IF NOT EXISTS Tasks (
+                Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                Name TEXT NOT NULL,
+                Description TEXT NOT NULL,
+                Status TEXT NOT NULL
+            );";
+        command.ExecuteNonQuery();
+    }
+
+    public override async Task<CreateResult<TaskItem>> CreateAsync(TaskItem dataObject)
+    {
+        var validateResult = await ValidateCreateAsync(dataObject);
+        if (validateResult.ResultCode == ResultCode.Failure)
+            return new CreateResult<TaskItem>(ResultCode.Failure, dataObject, "Validation failed.");
+
+        using var connection = new SqliteConnection(_connectionString);
+        await connection.OpenAsync();
+        var command = connection.CreateCommand();
+        command.CommandText = "INSERT INTO Tasks (Name, Description, Status) VALUES ($name, $description, $status); SELECT last_insert_rowid();";
+        command.Parameters.AddWithValue("$name", dataObject.Name);
+        command.Parameters.AddWithValue("$description", dataObject.Description);
+        command.Parameters.AddWithValue("$status", dataObject.Status.ToString());
+        var id = Convert.ToUInt32(await command.ExecuteScalarAsync());
+        dataObject.Id = id;
+        return new CreateResult<TaskItem>(ResultCode.Success, dataObject);
+    }
+
+    public override async Task<DeleteResult> DeleteAsync(TaskItem dataObject)
+    {
+        using var connection = new SqliteConnection(_connectionString);
+        await connection.OpenAsync();
+        var command = connection.CreateCommand();
+        command.CommandText = "DELETE FROM Tasks WHERE Id = $id";
+        command.Parameters.AddWithValue("$id", dataObject.Id);
+        var rowsAffected = await command.ExecuteNonQueryAsync();
+        if (rowsAffected == 0)
+            return new DeleteResult(ResultCode.Failure, dataObject.Id, "Failed to delete record.");
+        return new DeleteResult(ResultCode.Success, dataObject.Id);
+    }
+
+    public override async Task<UpdateResult<TaskItem>> UpdateAsync(TaskItem dataObject)
+    {
+        var validateResult = await ValidateUpdateAsync(dataObject);
+        if (validateResult.ResultCode == ResultCode.Failure)
+            return new UpdateResult<TaskItem>(ResultCode.Failure, dataObject, "Validation failed.");
+
+        using var connection = new SqliteConnection(_connectionString);
+        await connection.OpenAsync();
+        var cmd = connection.CreateCommand();
+        cmd.CommandText = "UPDATE Tasks SET Name = $name, Description = $description, Status = $status WHERE Id = $id";
+        cmd.Parameters.AddWithValue("$name", dataObject.Name);
+        cmd.Parameters.AddWithValue("$description", dataObject.Description);
+        cmd.Parameters.AddWithValue("$status", dataObject.Status.ToString());
+        cmd.Parameters.AddWithValue("$id", dataObject.Id);
+        var rowsAffected = await cmd.ExecuteNonQueryAsync();
+        if (rowsAffected == 0)
+            return new UpdateResult<TaskItem>(ResultCode.Failure, dataObject, "Task not found.");
+        TaskItem task = await GetSingleAsync(dataObject.Id);
+        return new UpdateResult<TaskItem>(ResultCode.Success, task);
+    }
+
+    public override async Task<ValidateResult> ValidateCreateAsync(TaskItem dataObject)
+    {
+        using var connection = new SqliteConnection(_connectionString);
+        await connection.OpenAsync();
+        var command = connection.CreateCommand();
+        command.CommandText = "SELECT COUNT(*) FROM Tasks WHERE Name = $name";
+        command.Parameters.AddWithValue("$name", dataObject.Name);
+        var count = (long)await command.ExecuteScalarAsync();
+        if (count != 0)
+        {
+            ValidateError validateError = new ValidateError(nameof(TaskItem.Name), "The name already exists and cannot be created.");
+            return new ValidateResult(ResultCode.Failure, dataObject.Id, validateError);
+        }
+        return new ValidateResult(ResultCode.Success, dataObject.Id);
+    }
+
+    public override async Task<ValidateResult> ValidateUpdateAsync(TaskItem dataObject)
+    {
+        using var connection = new SqliteConnection(_connectionString);
+        await connection.OpenAsync();
+        var command = connection.CreateCommand();
+        command.CommandText = "SELECT COUNT(*) FROM Tasks WHERE Id = $id";
+        command.Parameters.AddWithValue("$id", dataObject.Id);
+        var count = (long)await command.ExecuteScalarAsync();
+        if (count == 0)
+        {
+            ValidateError validateError = new ValidateError(nameof(TaskItem.Id), "The id does not exist.");
+            return new ValidateResult(ResultCode.Failure, dataObject.Id, validateError);
+        }
+        command.CommandText = "SELECT COUNT(*) FROM Tasks WHERE Name = $name AND Id != $id";
+        command.Parameters.Clear();
+        command.Parameters.AddWithValue("$name", dataObject.Name);
+        command.Parameters.AddWithValue("$id", dataObject.Id);
+        count = (long)await command.ExecuteScalarAsync();
+        if (count != 0)
+        {
+            ValidateError validateError = new ValidateError(nameof(TaskItem.Name), "The name already exists.");
+            return new ValidateResult(ResultCode.Failure, dataObject.Id, validateError);
+        }
+        return new ValidateResult(ResultCode.Success, dataObject.Id);
+    }
+
+    public override async Task<TaskItem> GetSingleAsync(uint id)
+    {
+        using var connection = new SqliteConnection(_connectionString);
+        await connection.OpenAsync();
+        var command = connection.CreateCommand();
+        command.CommandText = "SELECT Id, Name, Description, Status FROM Tasks WHERE Id = $id LIMIT 1";
+        command.Parameters.AddWithValue("$id", id);
+        using var reader = await command.ExecuteReaderAsync();
+        if (await reader.ReadAsync())
+        {
+            return new TaskItem
+            {
+                Id = (uint)reader.GetInt64(0),
+                Name = reader.GetString(1),
+                Description = reader.GetString(2),
+                Status = Enum.Parse<Status>(reader.GetString(3))
+            };
+        }
+        return null;
+    }
+
+    public override async Task<List<TaskItem>> GetAllAsync()
+    {
+        var tasks = new List<TaskItem>();
+        using var connection = new SqliteConnection(_connectionString);
+        await connection.OpenAsync();
+        var command = connection.CreateCommand();
+        command.CommandText = "SELECT Id, Name, Description, Status FROM Tasks";
+        using var reader = await command.ExecuteReaderAsync();
+        while (await reader.ReadAsync())
+        {
+            tasks.Add(new TaskItem
+            {
+                Id = (uint)reader.GetInt64(0),
+                Name = reader.GetString(1),
+                Description = reader.GetString(2),
+                Status = Enum.Parse<Status>(reader.GetString(3))
+            });
+        }
+        return tasks;
+    }
+}
