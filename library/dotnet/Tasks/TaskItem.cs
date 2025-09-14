@@ -10,5 +10,7 @@ public sealed class TaskItem : IDataObject
 
     public Status Status { get; set; }
 
+    public int Assignee { get; set; } // TODO: implement
+
     public uint GetId() => Id;
 }

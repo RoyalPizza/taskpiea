@@ -30,9 +30,17 @@ Until this app is finished, the design section will only include what is desired
 - CRUD tasks with name, description, status, and user
 - Popup on click to edit task name, description, and user; but can set status inline.
 
+# UI
+- home screen to select a project
+- task list screen that displays grid of tasks
+- task popup for editing a selected task
+- accounts screen to manager users
+
 ## Gotchas
 - no status flow. Always manually set status
 - no subtasks
 - no offline support. (client applications will not work as standalone yet)
 - no attachments
 - no markdown support, plain text only.
+- can only have one assignee
+	- Need to decide if this will be a permanent restriction or not. Anytime I have used a task manager with multiple assignees, its kinda of useless. Or the task is too large and needs to be broken up. When watchers are implemented, that will need to support multiple.

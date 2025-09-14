@@ -5,14 +5,11 @@ namespace Taskiea.Core.Accounts;
 
 public sealed class UserStorageDataLayer : StorageDataLayer<User>
 {
-    public UserStorageDataLayer(string connectionString) : base(connectionString)
+    public override void Initialize(ProjectConnectionData projectConnectionData)
     {
+        string connectionString = GetConnectionString(projectConnectionData);
 
-    }
-
-    public override void Initialize()
-    {
-        using var connection = new SqliteConnection(_connectionString);
+        using var connection = new SqliteConnection(connectionString);
         connection.Open();
 
         var command = connection.CreateCommand();
@@ -24,13 +21,15 @@ public sealed class UserStorageDataLayer : StorageDataLayer<User>
         command.ExecuteNonQuery();
     }
 
-    public override async Task<CreateResult<User>> CreateAsync(User dataObject, CancellationToken cancellationToken)
+    public override async Task<CreateResult<User>> CreateAsync(ProjectConnectionData projectConnectionData, User dataObject, CancellationToken cancellationToken)
     {
-        var validateResult = await ValidateCreateAsync(dataObject, cancellationToken);
+        string connectionString = GetConnectionString(projectConnectionData);
+
+        var validateResult = await ValidateCreateAsync(projectConnectionData, dataObject, cancellationToken);
         if (validateResult.ResultCode == ResultCode.Failure)
             return new CreateResult<User>(ResultCode.Failure, dataObject, "Validation failed.");
 
-        using var connection = new SqliteConnection(_connectionString);
+        using var connection = new SqliteConnection(connectionString);
         await connection.OpenAsync(cancellationToken);
 
         var command = connection.CreateCommand();
@@ -43,9 +42,11 @@ public sealed class UserStorageDataLayer : StorageDataLayer<User>
         return new CreateResult<User>(ResultCode.Success, dataObject);
     }
 
-    public override async Task<DeleteResult> DeleteAsync(uint id, CancellationToken cancellationToken)
+    public override async Task<DeleteResult> DeleteAsync(ProjectConnectionData projectConnectionData, uint id, CancellationToken cancellationToken)
     {
-        using var connection = new SqliteConnection(_connectionString);
+        string connectionString = GetConnectionString(projectConnectionData);
+
+        using var connection = new SqliteConnection(connectionString);
         await connection.OpenAsync(cancellationToken);
         var command = connection.CreateCommand();
         command.CommandText = "DELETE FROM Users WHERE Id = $id";
@@ -58,13 +59,15 @@ public sealed class UserStorageDataLayer : StorageDataLayer<User>
         return new DeleteResult(ResultCode.Success, id);
     }
 
-    public override async Task<UpdateResult<User>> UpdateAsync(User dataObject, CancellationToken cancellationToken)
+    public override async Task<UpdateResult<User>> UpdateAsync(ProjectConnectionData projectConnectionData, User dataObject, CancellationToken cancellationToken)
     {
-        var validateResult = await ValidateUpdateAsync(dataObject, cancellationToken);
+        string connectionString = GetConnectionString(projectConnectionData);
+
+        var validateResult = await ValidateUpdateAsync(projectConnectionData, dataObject, cancellationToken);
         if (validateResult.ResultCode == ResultCode.Failure)
             return new UpdateResult<User>(ResultCode.Failure, dataObject, "Validation failed.");
 
-        using var connection = new SqliteConnection(_connectionString);
+        using var connection = new SqliteConnection(connectionString);
         await connection.OpenAsync(cancellationToken);
 
         using var cmd = connection.CreateCommand();
@@ -79,14 +82,16 @@ public sealed class UserStorageDataLayer : StorageDataLayer<User>
         return new UpdateResult<User>(ResultCode.Success, dataObject);
     }
 
-    public override async Task<ValidateResult> ValidateCreateAsync(User dataObject, CancellationToken cancellationToken)
+    public override async Task<ValidateResult> ValidateCreateAsync(ProjectConnectionData projectConnectionData, User dataObject, CancellationToken cancellationToken)
     {
-        using var connection = new SqliteConnection(_connectionString);
+        string connectionString = GetConnectionString(projectConnectionData);
+
+        using var connection = new SqliteConnection(connectionString);
         await connection.OpenAsync(cancellationToken);
         var command = connection.CreateCommand();
         command.CommandText = "SELECT COUNT(*) FROM Users WHERE Name = $name";
         command.Parameters.AddWithValue("$name", dataObject.Name);
-        var count = (long)await command.ExecuteScalarAsync(cancellationToken);
+        var count = Convert.ToInt64(await command.ExecuteScalarAsync(cancellationToken));
         if (count != 0)
         {
             ValidateError validateError = new ValidateError(nameof(User.Name), "The name already exists and cannot be created.");
@@ -97,16 +102,18 @@ public sealed class UserStorageDataLayer : StorageDataLayer<User>
         return new ValidateResult(ResultCode.Success, dataObject.Id);
     }
 
-    public override async Task<ValidateResult> ValidateUpdateAsync(User dataObject, CancellationToken cancellationToken)
+    public override async Task<ValidateResult> ValidateUpdateAsync(ProjectConnectionData projectConnectionData, User dataObject, CancellationToken cancellationToken)
     {
-        using var connection = new SqliteConnection(_connectionString);
+        string connectionString = GetConnectionString(projectConnectionData);
+
+        using var connection = new SqliteConnection(connectionString);
         await connection.OpenAsync(cancellationToken);
 
         // Make sure that Id exist
         var command = connection.CreateCommand();
         command.CommandText = "SELECT COUNT(*) FROM Users WHERE Id = $id";
         command.Parameters.AddWithValue("$id", dataObject.Id);
-        var count = (long)await command.ExecuteScalarAsync(cancellationToken);
+        var count = Convert.ToInt64(await command.ExecuteScalarAsync(cancellationToken));
         if (count == 0)
         {
             ValidateError validateError = new ValidateError(nameof(User.Id), "The id does not exist..");
@@ -119,7 +126,7 @@ public sealed class UserStorageDataLayer : StorageDataLayer<User>
         command.Parameters.AddWithValue("$name", dataObject.Name);
         command.Parameters.AddWithValue("$id", dataObject.Id);
 
-        count = (long)await command.ExecuteScalarAsync(cancellationToken);
+        count = Convert.ToInt64(await command.ExecuteScalarAsync(cancellationToken));
         if (count != 0)
         {
             ValidateError validateError = new ValidateError(nameof(User.Name), "The name already exists and cannot be created.");
@@ -130,9 +137,11 @@ public sealed class UserStorageDataLayer : StorageDataLayer<User>
         return new ValidateResult(ResultCode.Success, dataObject.Id);
     }
 
-    public override async Task<GetSingleResult<User>> GetSingleAsync(uint id, CancellationToken cancellationToken)
+    public override async Task<GetSingleResult<User>> GetSingleAsync(ProjectConnectionData projectConnectionData, uint id, CancellationToken cancellationToken)
     {
-        using var connection = new SqliteConnection(_connectionString);
+        string connectionString = GetConnectionString(projectConnectionData);
+
+        using var connection = new SqliteConnection(connectionString);
         await connection.OpenAsync(cancellationToken);
         var command = connection.CreateCommand();
         command.CommandText = "SELECT Id, Name FROM Users WHERE Id = $id LIMIT 1";
@@ -150,15 +159,16 @@ public sealed class UserStorageDataLayer : StorageDataLayer<User>
         return new GetSingleResult<User>(ResultCode.Failure, id, null, "Failed to get user from storage.");
     }
 
-    public override async Task<GetManyResult<User>> GetAllAsync(CancellationToken cancellationToken)
+    public override async Task<GetManyResult<User>> GetAllAsync(ProjectConnectionData projectConnectionData, CancellationToken cancellationToken)
     {
-        var users = new List<User>();
+        string connectionString = GetConnectionString(projectConnectionData);
 
-        using var connection = new SqliteConnection(_connectionString);
+        using var connection = new SqliteConnection(connectionString);
         await connection.OpenAsync(cancellationToken);
         using var command = connection.CreateCommand();
         command.CommandText = "SELECT Id, Name FROM Users";
 
+        var users = new List<User>();
         using var reader = await command.ExecuteReaderAsync(cancellationToken);
         while (await reader.ReadAsync(cancellationToken))
         {

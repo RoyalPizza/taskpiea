@@ -1,9 +1,11 @@
 ﻿using System.Net.Http.Json;
+using System.Text;
+using System.Text.Json;
 using Taskiea.Core.Results;
 
 namespace Taskiea.Core;
 
-public abstract class HTTPDataLayer<T> : IDataLayer<T> where T : IDataObject
+public abstract class HTTPDataLayer<T> : ICRUDDataLayer<T> where T : IDataObject
 {
     private HttpClient _httpClient;
     private readonly string _typeName = typeof(T).Name;
@@ -13,10 +15,22 @@ public abstract class HTTPDataLayer<T> : IDataLayer<T> where T : IDataObject
         _httpClient = httpClient;
     }
 
-    public async Task<CreateResult<T>> CreateAsync(T dataObject, CancellationToken cancellationToken)
+    private static void AddProjectToRequest(HttpRequestMessage request, ProjectConnectionData projectConnectionData)
+    {
+        // Pass the project name to the API so it can use the storage datalayer with the proper connection string.
+        request.Headers.Add("X-Project-Id", projectConnectionData.ProjectName);
+    }
+
+    public async Task<CreateResult<T>> CreateAsync(ProjectConnectionData projectConnectionData, T dataObject, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(dataObject);
-        HttpResponseMessage response = await _httpClient.PostAsJsonAsync($"api/{_typeName}", dataObject, cancellationToken);
+
+        // TODO: Update all other HTTP functions to have this request style
+        var request = new HttpRequestMessage(HttpMethod.Post, $"api/{_typeName}");
+        AddProjectToRequest(request, projectConnectionData);
+        request.Content = new StringContent(JsonSerializer.Serialize(dataObject), Encoding.UTF8, "application/json");
+
+        HttpResponseMessage response = await _httpClient.SendAsync(request, cancellationToken);
 
         if (response.IsSuccessStatusCode)
         {
@@ -29,9 +43,12 @@ public abstract class HTTPDataLayer<T> : IDataLayer<T> where T : IDataObject
         return new CreateResult<T>(ResultCode.Failure, dataObject, "Failed to create data.");
     }
 
-    public async Task<DeleteResult> DeleteAsync(uint id, CancellationToken cancellationToken)
+    public async Task<DeleteResult> DeleteAsync(ProjectConnectionData projectConnectionData, uint id, CancellationToken cancellationToken)
     {
-        HttpResponseMessage response = await _httpClient.DeleteAsync($"api/{_typeName}/{id}", cancellationToken);
+        var request = new HttpRequestMessage(HttpMethod.Delete, $"api/{_typeName}/{id}");
+        AddProjectToRequest(request, projectConnectionData);
+
+        HttpResponseMessage response = await _httpClient.SendAsync(request, cancellationToken);
 
         if (response.IsSuccessStatusCode)
         {
@@ -44,14 +61,19 @@ public abstract class HTTPDataLayer<T> : IDataLayer<T> where T : IDataObject
         return new DeleteResult(ResultCode.Failure, id, "Failed to delete data.");
     }
 
-    public async Task<UpdateResult<T>> UpdateAsync(T dataObject, CancellationToken cancellationToken)
+    public async Task<UpdateResult<T>> UpdateAsync(ProjectConnectionData projectConnectionData, T dataObject, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(dataObject);
-        HttpResponseMessage resposne = await _httpClient.PutAsJsonAsync<T>($"api/{_typeName}", dataObject, cancellationToken);
 
-        if (resposne.IsSuccessStatusCode)
+        var request = new HttpRequestMessage(HttpMethod.Put, $"api/{_typeName}");
+        AddProjectToRequest(request, projectConnectionData);
+        request.Content = new StringContent(JsonSerializer.Serialize(dataObject), Encoding.UTF8, "application/json");
+
+        HttpResponseMessage response = await _httpClient.SendAsync(request, cancellationToken);
+
+        if (response.IsSuccessStatusCode)
         {
-            var result = await resposne.Content.ReadFromJsonAsync<UpdateResult<T>>();
+            var result = await response.Content.ReadFromJsonAsync<UpdateResult<T>>();
             if (result == null)
                 return new UpdateResult<T>(ResultCode.Failure, dataObject, "Failed to deserialize data on update response.");
             return result;
@@ -60,10 +82,15 @@ public abstract class HTTPDataLayer<T> : IDataLayer<T> where T : IDataObject
         return new UpdateResult<T>(ResultCode.Failure, dataObject, "Failed to update data.");
     }
 
-    public async Task<ValidateResult> ValidateCreateAsync(T dataObject, CancellationToken cancellationToken)
+    public async Task<ValidateResult> ValidateCreateAsync(ProjectConnectionData projectConnectionData, T dataObject, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(dataObject);
-        HttpResponseMessage response = await _httpClient.PostAsJsonAsync($"api/{_typeName}/Validate", dataObject, cancellationToken);
+
+        var request = new HttpRequestMessage(HttpMethod.Post, $"api/{_typeName}/Validate");
+        AddProjectToRequest(request, projectConnectionData);
+        request.Content = new StringContent(JsonSerializer.Serialize(dataObject), Encoding.UTF8, "application/json");
+
+        HttpResponseMessage response = await _httpClient.SendAsync(request, cancellationToken);
 
         if (response.IsSuccessStatusCode)
         {
@@ -76,10 +103,15 @@ public abstract class HTTPDataLayer<T> : IDataLayer<T> where T : IDataObject
         return new ValidateResult(ResultCode.Failure, dataObject.GetId(), "Failed to validate create data.");
     }
 
-    public async Task<ValidateResult> ValidateUpdateAsync(T dataObject, CancellationToken cancellationToken)
+    public async Task<ValidateResult> ValidateUpdateAsync(ProjectConnectionData projectConnectionData, T dataObject, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(dataObject);
-        HttpResponseMessage response = await _httpClient.PutAsJsonAsync($"api/{_typeName}/Validate", dataObject, cancellationToken);
+
+        var request = new HttpRequestMessage(HttpMethod.Put, $"api/{_typeName}/Validate");
+        AddProjectToRequest(request, projectConnectionData);
+        request.Content = new StringContent(JsonSerializer.Serialize(dataObject), Encoding.UTF8, "application/json");
+
+        HttpResponseMessage response = await _httpClient.SendAsync(request, cancellationToken);
 
         if (response.IsSuccessStatusCode)
         {
@@ -92,9 +124,12 @@ public abstract class HTTPDataLayer<T> : IDataLayer<T> where T : IDataObject
         return new ValidateResult(ResultCode.Failure, dataObject.GetId(), "Failed to validate update data.");
     }
 
-    public async Task<GetSingleResult<T>> GetSingleAsync(uint id, CancellationToken cancellationToken)
+    public async Task<GetSingleResult<T>> GetSingleAsync(ProjectConnectionData projectConnectionData, uint id, CancellationToken cancellationToken)
     {
-        HttpResponseMessage response = await _httpClient.GetAsync($"api/{_typeName}/Single/{id}", cancellationToken);
+        var request = new HttpRequestMessage(HttpMethod.Get, $"api/{_typeName}/Single/{id}");
+        AddProjectToRequest(request, projectConnectionData);
+
+        HttpResponseMessage response = await _httpClient.SendAsync(request, cancellationToken);
 
         if (response.IsSuccessStatusCode)
         {
@@ -107,9 +142,12 @@ public abstract class HTTPDataLayer<T> : IDataLayer<T> where T : IDataObject
         return new GetSingleResult<T>(ResultCode.Failure, id, default(T), "Failed to retrieve data");
     }
 
-    public async Task<GetManyResult<T>> GetAllAsync(CancellationToken cancellationToken)
+    public async Task<GetManyResult<T>> GetAllAsync(ProjectConnectionData projectConnectionData, CancellationToken cancellationToken)
     {
-        HttpResponseMessage response = await _httpClient.GetAsync($"api/{_typeName}/All", cancellationToken);
+        var request = new HttpRequestMessage(HttpMethod.Get, $"api/{_typeName}/All");
+        AddProjectToRequest(request, projectConnectionData);
+
+        HttpResponseMessage response = await _httpClient.SendAsync(request, cancellationToken);
 
         if (response.IsSuccessStatusCode)
         {
