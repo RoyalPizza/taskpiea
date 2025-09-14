@@ -9,3 +9,7 @@ This app is designed around the idea of using a client in either standalone or a
 For terminology purposes, classes will basically represent the View object. If a specific class needs to be made in order to represent a db model, that would be in a seperate namespace. And the service code will have to be very careful about the types because of the duplicate names. 
 
 I am not using EF for Sqlite, so as of now I think that just mapping properties to columns is fine, no need to do model conversion.
+
+Additionally, the reason an interace is declared per type is so that a client can just hold a refernce of the interface type and chose to use either HTTP or Sqlite easily.
+
+A RepositoryManager using a semi "service locator pattern" will be used by the client as DI is typically not possible on most UI frameworks. And their might need to be some specific operations called, like all datalayers having initialize called when a new project is created.

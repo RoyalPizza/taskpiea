@@ -1,5 +1,7 @@
-﻿namespace Taskiea.Core.Accounts;
+﻿using Taskiea.Core.Connections;
 
-public interface IUserRepository : IRepository<User>
+namespace Taskiea.Core.Accounts;
+
+public interface IUserRepository<T> : IRepository<User, T> where T : BaseConnectionData
 {
 }

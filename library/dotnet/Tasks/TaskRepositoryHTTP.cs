@@ -1,10 +1,10 @@
-﻿namespace Taskiea.Core.Accounts
-{
-    public class TaskRepositoryHTTP : BaseHTTPRepository<User>
-    {
-        public TaskRepositoryHTTP(HttpClient httpClient) : base(httpClient)
-        {
+﻿using Taskiea.Core.Connections;
+using Taskiea.Core.Tasks;
 
-        }
+namespace Taskiea.Core.Accounts
+{
+    public class TaskRepositoryHTTP : BaseHTTPRepository<TaskItem>, ITaskRepository<HTTPConnectionData>
+    {
+
     }
 }

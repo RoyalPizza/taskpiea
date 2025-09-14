@@ -1,11 +1,9 @@
-﻿
+﻿using Taskiea.Core.Connections;
+
 namespace Taskiea.Core.Accounts
 {
-    public class UserRepositoryHTTP : BaseHTTPRepository<User>
+    public class UserRepositoryHTTP : BaseHTTPRepository<User>, IUserRepository<HTTPConnectionData>
     {
-        public UserRepositoryHTTP(HttpClient httpClient) : base(httpClient)
-        {
 
-        }
     }
 }

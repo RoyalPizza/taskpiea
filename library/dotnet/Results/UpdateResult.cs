@@ -7,10 +7,10 @@ public sealed class UpdateResult<T> where T : IEntity
     public string ErrorMessage { get; init; } = "";
 
     public UpdateResult() { }
-    public UpdateResult(ResultCode resultCode, T? dataObject, string errorMessage = "")
+    public UpdateResult(ResultCode resultCode, T? entity, string errorMessage = "")
     {
         ResultCode = resultCode;
-        DataObject = dataObject;
+        DataObject = entity;
         ErrorMessage = errorMessage;
     }
 }
