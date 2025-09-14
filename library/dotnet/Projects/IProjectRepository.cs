@@ -1,6 +1,4 @@
-﻿using Taskiea.Core.Connections;
-
-namespace Taskiea.Core.Projects;
+﻿namespace Taskiea.Core.Projects;
 
 public interface IProjectRepository<T> : IRepository<Project>
 {

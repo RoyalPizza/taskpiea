@@ -1,6 +1,5 @@
 ﻿using Microsoft.Data.Sqlite;
 using Taskiea.Core.Connections;
-using Taskiea.Core.Projects;
 using Taskiea.Core.Results;
 using Taskiea.Core.Tasks;
 

@@ -1,5 +1,4 @@
-﻿using Taskiea.Core.Connections;
-using Taskiea.Core.Tasks;
+﻿using Taskiea.Core.Tasks;
 
 namespace Taskiea.Core.Accounts
 {

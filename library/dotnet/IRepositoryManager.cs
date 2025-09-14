@@ -2,6 +2,6 @@
 
 public interface IRepositoryManager
 {
-    void Register(Type type, IRepository repository);
+    void Register<T>(IRepository repository) where T : IRepository;
     T Get<T>() where T : IRepository;
 }

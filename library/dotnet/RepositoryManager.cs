@@ -24,8 +24,8 @@ public class RepositoryManager : IRepositoryManager
     {
         if (connectionData is SqliteConnectionData sqliteConnectionData)
         {
-            Register(typeof(IUserRepository), new UserRepositorySqlite());
-            Register(typeof(ITaskRepository), new TaskRepositorySqlite());
+            Register<IUserRepository>(new UserRepositorySqlite());
+            Register<ITaskRepository>(new TaskRepositorySqlite());
         }
 
         else if (connectionData is HTTPConnectionData httpConnectionData)
@@ -34,16 +34,21 @@ public class RepositoryManager : IRepositoryManager
             // TODO: Add error checks incase endpoint is invalid?
             _httpClient = new HttpClient() { BaseAddress = new Uri(httpConnectionData.Endpoint) };
 
-            Register(typeof(IUserRepository), new UserRepositoryHTTP());
-            Register(typeof(IUserRepository), new TaskRepositoryHTTP());
+            Register<IUserRepository>(new UserRepositoryHTTP());
+            Register<ITaskRepository>(new TaskRepositoryHTTP());
         }
 
         InitializeAll(connectionData);
     }
 
-    public void Register(Type type, IRepository repository)
+    public void Register<T>(IRepository repository) where T : IRepository
     {
-        _repositories[type] = repository;
+        _repositories[typeof(T)] = repository;
+    }
+
+    public void Unregister<T>() where T : IRepository
+    {
+        _repositories.Remove(typeof(T));
     }
 
     public T Get<T>() where T : IRepository
@@ -54,6 +59,12 @@ public class RepositoryManager : IRepositoryManager
         throw new InvalidOperationException($"No repository registered for {typeof(T).Name}");
     }
 
+    /// <summary>
+    /// A helper function for scenarios where we want to reinitialize connections,
+    /// like when standalone apps switch projects or when a server receives a request
+    /// for another project
+    /// </summary>
+    /// <param name="connectionData"></param>
     public void InitializeAll(BaseConnectionData connectionData)
     {
         foreach (var repo in _repositories.Values)
