@@ -6,15 +6,16 @@ using Taskiea.Core.Results;
 
 namespace Taskiea.Core;
 
-public abstract class BaseHTTPRepository<T> : IRepository<T, HTTPConnectionData> where T : IEntity
+public abstract class BaseHTTPRepository<TEntity> : IRepository<TEntity> where TEntity : IEntity
 {
+    private HTTPConnectionData _connectionData;
     private HttpClient _httpClient = null!;
-    private readonly string _typeName = typeof(T).Name;
+    private readonly string _typeName = typeof(TEntity).Name;
 
-    public void Initialize(HTTPConnectionData httpConnectionData)
+    public void Initialize(string project)
     {
-        ArgumentNullException.ThrowIfNull(httpConnectionData.HttpClient);
-        _httpClient = httpConnectionData.HttpClient;
+        _connectionData = ConnectionCache.GetConnectionData<HTTPConnectionData>(project);
+        _httpClient = _connectionData.HttpClient;
     }
 
     protected static void AddProjectToRequest(HttpRequestMessage request, HTTPConnectionData connectionData)
@@ -23,32 +24,32 @@ public abstract class BaseHTTPRepository<T> : IRepository<T, HTTPConnectionData>
         request.Headers.Add("X-Project-Id", connectionData.ProjectName);
     }
 
-    public async Task<CreateResult<T>> CreateAsync(HTTPConnectionData connectionData, T entity, CancellationToken cancellationToken)
+    public async Task<CreateResult<TEntity>> CreateAsync(string project, TEntity entity, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(entity);
 
         // TODO: Update all other HTTP functions to have this request style
         var request = new HttpRequestMessage(HttpMethod.Post, $"api/{_typeName}");
-        AddProjectToRequest(request, connectionData);
+        AddProjectToRequest(request, _connectionData);
         request.Content = new StringContent(JsonSerializer.Serialize(entity), Encoding.UTF8, "application/json");
 
         HttpResponseMessage response = await _httpClient.SendAsync(request, cancellationToken);
 
         if (response.IsSuccessStatusCode)
         {
-            var result = await response.Content.ReadFromJsonAsync<CreateResult<T>>();
+            var result = await response.Content.ReadFromJsonAsync<CreateResult<TEntity>>();
             if (result == null)
-                return new CreateResult<T>(ResultCode.Failure, entity, "Failed to deserialize data on create response.");
+                return new CreateResult<TEntity>(ResultCode.Failure, entity, "Failed to deserialize data on create response.");
             return result;
         }
 
-        return new CreateResult<T>(ResultCode.Failure, entity, "Failed to create data.");
+        return new CreateResult<TEntity>(ResultCode.Failure, entity, "Failed to create data.");
     }
 
-    public async Task<DeleteResult> DeleteAsync(HTTPConnectionData connectionData, uint id, CancellationToken cancellationToken)
+    public async Task<DeleteResult> DeleteAsync(string project, uint id, CancellationToken cancellationToken)
     {
         var request = new HttpRequestMessage(HttpMethod.Delete, $"api/{_typeName}/{id}");
-        AddProjectToRequest(request, connectionData);
+        AddProjectToRequest(request, _connectionData);
 
         HttpResponseMessage response = await _httpClient.SendAsync(request, cancellationToken);
 
@@ -63,33 +64,33 @@ public abstract class BaseHTTPRepository<T> : IRepository<T, HTTPConnectionData>
         return new DeleteResult(ResultCode.Failure, id, "Failed to delete data.");
     }
 
-    public async Task<UpdateResult<T>> UpdateAsync(HTTPConnectionData connectionData, T entity, CancellationToken cancellationToken)
+    public async Task<UpdateResult<TEntity>> UpdateAsync(string project, TEntity entity, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(entity);
 
         var request = new HttpRequestMessage(HttpMethod.Put, $"api/{_typeName}");
-        AddProjectToRequest(request, connectionData);
+        AddProjectToRequest(request, _connectionData);
         request.Content = new StringContent(JsonSerializer.Serialize(entity), Encoding.UTF8, "application/json");
 
         HttpResponseMessage response = await _httpClient.SendAsync(request, cancellationToken);
 
         if (response.IsSuccessStatusCode)
         {
-            var result = await response.Content.ReadFromJsonAsync<UpdateResult<T>>();
+            var result = await response.Content.ReadFromJsonAsync<UpdateResult<TEntity>>();
             if (result == null)
-                return new UpdateResult<T>(ResultCode.Failure, entity, "Failed to deserialize data on update response.");
+                return new UpdateResult<TEntity>(ResultCode.Failure, entity, "Failed to deserialize data on update response.");
             return result;
         }
 
-        return new UpdateResult<T>(ResultCode.Failure, entity, "Failed to update data.");
+        return new UpdateResult<TEntity>(ResultCode.Failure, entity, "Failed to update data.");
     }
 
-    public async Task<ValidateResult> ValidateCreateAsync(HTTPConnectionData connectionData, T entity, CancellationToken cancellationToken)
+    public async Task<ValidateResult> ValidateCreateAsync(string project, TEntity entity, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(entity);
 
         var request = new HttpRequestMessage(HttpMethod.Post, $"api/{_typeName}/Validate");
-        AddProjectToRequest(request, connectionData);
+        AddProjectToRequest(request, _connectionData);
         request.Content = new StringContent(JsonSerializer.Serialize(entity), Encoding.UTF8, "application/json");
 
         HttpResponseMessage response = await _httpClient.SendAsync(request, cancellationToken);
@@ -105,12 +106,12 @@ public abstract class BaseHTTPRepository<T> : IRepository<T, HTTPConnectionData>
         return new ValidateResult(ResultCode.Failure, entity.GetId(), "Failed to validate create data.");
     }
 
-    public async Task<ValidateResult> ValidateUpdateAsync(HTTPConnectionData connectionData, T entity, CancellationToken cancellationToken)
+    public async Task<ValidateResult> ValidateUpdateAsync(string project, TEntity entity, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(entity);
 
         var request = new HttpRequestMessage(HttpMethod.Put, $"api/{_typeName}/Validate");
-        AddProjectToRequest(request, connectionData);
+        AddProjectToRequest(request, _connectionData);
         request.Content = new StringContent(JsonSerializer.Serialize(entity), Encoding.UTF8, "application/json");
 
         HttpResponseMessage response = await _httpClient.SendAsync(request, cancellationToken);
@@ -126,39 +127,39 @@ public abstract class BaseHTTPRepository<T> : IRepository<T, HTTPConnectionData>
         return new ValidateResult(ResultCode.Failure, entity.GetId(), "Failed to validate update data.");
     }
 
-    public async Task<GetSingleResult<T>> GetSingleAsync(HTTPConnectionData connectionData, uint id, CancellationToken cancellationToken)
+    public async Task<GetSingleResult<TEntity>> GetSingleAsync(string project, uint id, CancellationToken cancellationToken)
     {
         var request = new HttpRequestMessage(HttpMethod.Get, $"api/{_typeName}/Single/{id}");
-        AddProjectToRequest(request, connectionData);
+        AddProjectToRequest(request, _connectionData);
 
         HttpResponseMessage response = await _httpClient.SendAsync(request, cancellationToken);
 
         if (response.IsSuccessStatusCode)
         {
-            var result = await response.Content.ReadFromJsonAsync<GetSingleResult<T>>();
+            var result = await response.Content.ReadFromJsonAsync<GetSingleResult<TEntity>>();
             if (result == null)
-                return new GetSingleResult<T>(ResultCode.Failure, id, default(T), "Failed to deserialize data on get single response.");
+                return new GetSingleResult<TEntity>(ResultCode.Failure, id, default(TEntity), "Failed to deserialize data on get single response.");
             return result;
         }
 
-        return new GetSingleResult<T>(ResultCode.Failure, id, default(T), "Failed to retrieve data");
+        return new GetSingleResult<TEntity>(ResultCode.Failure, id, default(TEntity), "Failed to retrieve data");
     }
 
-    public async Task<GetManyResult<T>> GetAllAsync(HTTPConnectionData connectionData, CancellationToken cancellationToken)
+    public async Task<GetManyResult<TEntity>> GetAllAsync(string project, CancellationToken cancellationToken)
     {
         var request = new HttpRequestMessage(HttpMethod.Get, $"api/{_typeName}/All");
-        AddProjectToRequest(request, connectionData);
+        AddProjectToRequest(request, _connectionData);
 
         HttpResponseMessage response = await _httpClient.SendAsync(request, cancellationToken);
 
         if (response.IsSuccessStatusCode)
         {
-            var result = await response.Content.ReadFromJsonAsync<GetManyResult<T>>();
+            var result = await response.Content.ReadFromJsonAsync<GetManyResult<TEntity>>();
             if (result == null)
-                return new GetManyResult<T>(ResultCode.Failure, "Failed to deserialize data on get single response.");
+                return new GetManyResult<TEntity>(ResultCode.Failure, "Failed to deserialize data on get single response.");
             return result;
         }
 
-        return new GetManyResult<T>(ResultCode.Failure, "Failed to retrieve data.");
+        return new GetManyResult<TEntity>(ResultCode.Failure, "Failed to retrieve data.");
     }
 }

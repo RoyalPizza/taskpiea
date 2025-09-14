@@ -1,9 +1,7 @@
-﻿using Taskiea.Core.Connections;
-
-namespace Taskiea.Core;
+﻿namespace Taskiea.Core;
 
 public interface IRepositoryManager
 {
-    //public void Register(Type type, object obj);
-    public IRepository<IEntity, BaseConnectionData> Get<T>() where T : IEntity;
+    void Register(Type type, IRepository repository);
+    T Get<T>() where T : IRepository;
 }

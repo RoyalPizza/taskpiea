@@ -2,6 +2,6 @@
 
 namespace Taskiea.Core.Tasks;
 
-public interface ITaskRepository<T> : IRepository<TaskItem, T> where T : BaseConnectionData
+public interface ITaskRepository : IRepository<TaskItem>
 {
 }

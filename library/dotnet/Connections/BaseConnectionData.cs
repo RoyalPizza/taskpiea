@@ -1,6 +1,6 @@
 ﻿namespace Taskiea.Core.Connections;
 
-public class BaseConnectionData
+public abstract class BaseConnectionData
 {
     public string ProjectName { get; set; }
 

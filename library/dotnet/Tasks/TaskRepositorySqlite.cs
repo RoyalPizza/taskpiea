@@ -1,15 +1,17 @@
 ﻿using Microsoft.Data.Sqlite;
 using Taskiea.Core.Connections;
+using Taskiea.Core.Projects;
 using Taskiea.Core.Results;
 using Taskiea.Core.Tasks;
 
 namespace Taskiea.Core;
 
-public sealed class TaskRepositorySqlite : ITaskRepository<SqliteConnectionData>
+public sealed class TaskRepositorySqlite : ITaskRepository
 {
-    public void Initialize(SqliteConnectionData connectionData)
+    public void Initialize(string project)
     {
-        using var connection = new SqliteConnection(connectionData.ConnectionString);
+        string connectionString = ConnectionCache.GetConnectionData<SqliteConnectionData>(project).ConnectionString;
+        using var connection = new SqliteConnection(connectionString);
         connection.Open();
         var command = connection.CreateCommand();
         command.CommandText = @"
@@ -22,13 +24,14 @@ public sealed class TaskRepositorySqlite : ITaskRepository<SqliteConnectionData>
         command.ExecuteNonQuery();
     }
 
-    public async Task<CreateResult<TaskItem>> CreateAsync(SqliteConnectionData connectionData, TaskItem entity, CancellationToken cancellationToken)
+    public async Task<CreateResult<TaskItem>> CreateAsync(string project, TaskItem entity, CancellationToken cancellationToken)
     {
-        var validateResult = await ValidateCreateAsync(connectionData, entity, cancellationToken);
+        var validateResult = await ValidateCreateAsync(project, entity, cancellationToken);
         if (validateResult.ResultCode == ResultCode.Failure)
             return new CreateResult<TaskItem>(ResultCode.Failure, entity, "Validation failed.");
 
-        using var connection = new SqliteConnection(connectionData.ConnectionString);
+        string connectionString = ConnectionCache.GetConnectionData<SqliteConnectionData>(project).ConnectionString;
+        using var connection = new SqliteConnection(connectionString);
         await connection.OpenAsync(cancellationToken);
         var command = connection.CreateCommand();
         command.CommandText = "INSERT INTO Tasks (Name, Description, Status) VALUES ($name, $description, $status); SELECT last_insert_rowid();";
@@ -39,9 +42,10 @@ public sealed class TaskRepositorySqlite : ITaskRepository<SqliteConnectionData>
         return new CreateResult<TaskItem>(ResultCode.Success, entity);
     }
 
-    public async Task<DeleteResult> DeleteAsync(SqliteConnectionData connectionData, uint id, CancellationToken cancellationToken)
+    public async Task<DeleteResult> DeleteAsync(string project, uint id, CancellationToken cancellationToken)
     {
-        using var connection = new SqliteConnection(connectionData.ConnectionString);
+        string connectionString = ConnectionCache.GetConnectionData<SqliteConnectionData>(project).ConnectionString;
+        using var connection = new SqliteConnection(connectionString);
         await connection.OpenAsync(cancellationToken);
         var command = connection.CreateCommand();
         command.CommandText = "DELETE FROM Tasks WHERE Id = $id";
@@ -52,13 +56,14 @@ public sealed class TaskRepositorySqlite : ITaskRepository<SqliteConnectionData>
         return new DeleteResult(ResultCode.Success, id);
     }
 
-    public async Task<UpdateResult<TaskItem>> UpdateAsync(SqliteConnectionData connectionData, TaskItem entity, CancellationToken cancellationToken)
+    public async Task<UpdateResult<TaskItem>> UpdateAsync(string project, TaskItem entity, CancellationToken cancellationToken)
     {
-        var validateResult = await ValidateUpdateAsync(connectionData, entity, cancellationToken);
+        var validateResult = await ValidateUpdateAsync(project, entity, cancellationToken);
         if (validateResult.ResultCode == ResultCode.Failure)
             return new UpdateResult<TaskItem>(ResultCode.Failure, entity, "Validation failed.");
 
-        using var connection = new SqliteConnection(connectionData.ConnectionString);
+        string connectionString = ConnectionCache.GetConnectionData<SqliteConnectionData>(project).ConnectionString;
+        using var connection = new SqliteConnection(connectionString);
         await connection.OpenAsync(cancellationToken);
 
         var cmd = connection.CreateCommand();
@@ -75,9 +80,10 @@ public sealed class TaskRepositorySqlite : ITaskRepository<SqliteConnectionData>
         return new UpdateResult<TaskItem>(ResultCode.Success, entity);
     }
 
-    public async Task<ValidateResult> ValidateCreateAsync(SqliteConnectionData connectionData, TaskItem entity, CancellationToken cancellationToken)
+    public async Task<ValidateResult> ValidateCreateAsync(string project, TaskItem entity, CancellationToken cancellationToken)
     {
-        using var connection = new SqliteConnection(connectionData.ConnectionString);
+        string connectionString = ConnectionCache.GetConnectionData<SqliteConnectionData>(project).ConnectionString;
+        using var connection = new SqliteConnection(connectionString);
         await connection.OpenAsync(cancellationToken);
         var command = connection.CreateCommand();
         command.CommandText = "SELECT COUNT(*) FROM Tasks WHERE Name = $name";
@@ -91,9 +97,10 @@ public sealed class TaskRepositorySqlite : ITaskRepository<SqliteConnectionData>
         return new ValidateResult(ResultCode.Success, entity.Id);
     }
 
-    public async Task<ValidateResult> ValidateUpdateAsync(SqliteConnectionData connectionData, TaskItem entity, CancellationToken cancellationToken)
+    public async Task<ValidateResult> ValidateUpdateAsync(string project, TaskItem entity, CancellationToken cancellationToken)
     {
-        using var connection = new SqliteConnection(connectionData.ConnectionString);
+        string connectionString = ConnectionCache.GetConnectionData<SqliteConnectionData>(project).ConnectionString;
+        using var connection = new SqliteConnection(connectionString);
         await connection.OpenAsync(cancellationToken);
         var command = connection.CreateCommand();
         command.CommandText = "SELECT COUNT(*) FROM Tasks WHERE Id = $id";
@@ -118,9 +125,10 @@ public sealed class TaskRepositorySqlite : ITaskRepository<SqliteConnectionData>
         return new ValidateResult(ResultCode.Success, entity.Id);
     }
 
-    public async Task<GetSingleResult<TaskItem>> GetSingleAsync(SqliteConnectionData connectionData, uint id, CancellationToken cancellationToken)
+    public async Task<GetSingleResult<TaskItem>> GetSingleAsync(string project, uint id, CancellationToken cancellationToken)
     {
-        using var connection = new SqliteConnection(connectionData.ConnectionString);
+        string connectionString = ConnectionCache.GetConnectionData<SqliteConnectionData>(project).ConnectionString;
+        using var connection = new SqliteConnection(connectionString);
         await connection.OpenAsync(cancellationToken);
         var command = connection.CreateCommand();
         command.CommandText = "SELECT Id, Name, Description, Status FROM Tasks WHERE Id = $id LIMIT 1";
@@ -140,13 +148,15 @@ public sealed class TaskRepositorySqlite : ITaskRepository<SqliteConnectionData>
         return new GetSingleResult<TaskItem>(ResultCode.Failure, id, null, "Failed to get task from storage.");
     }
 
-    public async Task<GetManyResult<TaskItem>> GetAllAsync(SqliteConnectionData connectionData, CancellationToken cancellationToken)
+    public async Task<GetManyResult<TaskItem>> GetAllAsync(string project, CancellationToken cancellationToken)
     {
-        var tasks = new List<TaskItem>();
-        using var connection = new SqliteConnection(connectionData.ConnectionString);
+        string connectionString = ConnectionCache.GetConnectionData<SqliteConnectionData>(project).ConnectionString;
+        using var connection = new SqliteConnection(connectionString);
         await connection.OpenAsync(cancellationToken);
         var command = connection.CreateCommand();
         command.CommandText = "SELECT Id, Name, Description, Status FROM Tasks";
+
+        var tasks = new List<TaskItem>();
         using var reader = await command.ExecuteReaderAsync();
         while (await reader.ReadAsync())
         {

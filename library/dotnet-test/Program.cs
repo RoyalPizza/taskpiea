@@ -14,7 +14,7 @@ namespace dotnet_test
 
         static void Main(string[] args)
         {
-            // this mimics me opening a project
+            // this mimics me opening a project which also chooses the connection method
             Project project = new Project() { Name = "Test Project" };
             _connectionData = new SqliteConnectionData(project.Name, null);
 
@@ -28,20 +28,20 @@ namespace dotnet_test
             // navigated to user page
             {
                 // a ui page would cache a reference to the repository
-                var userRepository = _repositoryManager.Get<User>();
+                var userRepository = _repositoryManager.Get<IUserRepository>();
 
                 User user = new User();
                 user.Name = "Royal Pizza";
 
                 // validate is called inside create, but you can call it manually for extra checks
-                var userValidateResult = userRepository.ValidateCreateAsync(_connectionData, user, _tokenSource.Token).Result;
-                var userCreateResult = userRepository.CreateAsync(_connectionData, user, _tokenSource.Token).Result;
+                var userValidateResult = userRepository.ValidateCreateAsync(project.Name, user, _tokenSource.Token).Result;
+                var userCreateResult = userRepository.CreateAsync(project.Name, user, _tokenSource.Token).Result;
             }
 
             // navigated to task page
             {
                 // a ui page would cache a reference to the repository
-                var taskRepository = _repositoryManager.Get<TaskItem>();
+                var taskRepository = _repositoryManager.Get<ITaskRepository>();
 
                 TaskItem task = new TaskItem();
                 task.Name = "Task 1";
@@ -49,8 +49,8 @@ namespace dotnet_test
                 task.Description = "";
 
                 // validate is called inside create, but you can call it manually for extra checks
-                var taskValidateResult = taskRepository.ValidateCreateAsync(_connectionData, task, _tokenSource.Token).Result;
-                var taskCreateResult = taskRepository.CreateAsync(_connectionData, task, _tokenSource.Token).Result;
+                var taskValidateResult = taskRepository.ValidateCreateAsync(project.Name, task, _tokenSource.Token).Result;
+                var taskCreateResult = taskRepository.CreateAsync(project.Name, task, _tokenSource.Token).Result;
             }
         }
     }
