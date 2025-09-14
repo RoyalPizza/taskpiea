@@ -1,6 +1,6 @@
 ﻿namespace Taskiea.Core.Accounts;
 
-public sealed class User : IDataObject
+public sealed class User : IEntity
 {
     public uint Id { get; set; }
 

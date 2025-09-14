@@ -4,11 +4,11 @@ using Taskiea.Core.Tasks;
 
 namespace Taskiea.Core;
 
-public sealed class TaskStorageDataLayer : StorageDataLayer<TaskItem>
+public sealed class TaskStorageDataLayer : IRepository<TaskItem>
 {
-    public override void Initialize(ProjectConnectionData projectConnectionData)
+    public void Initialize(ProjectConnectionData projectConnectionData)
     {
-        string connectionString = GetConnectionString(projectConnectionData);
+        string connectionString = RepositoryCache.GetConnectionString(projectConnectionData);
 
         using var connection = new SqliteConnection(connectionString);
         connection.Open();
@@ -23,9 +23,9 @@ public sealed class TaskStorageDataLayer : StorageDataLayer<TaskItem>
         command.ExecuteNonQuery();
     }
 
-    public override async Task<CreateResult<TaskItem>> CreateAsync(ProjectConnectionData projectConnectionData, TaskItem dataObject, CancellationToken cancellationToken)
+    public async Task<CreateResult<TaskItem>> CreateAsync(ProjectConnectionData projectConnectionData, TaskItem dataObject, CancellationToken cancellationToken)
     {
-        string connectionString = GetConnectionString(projectConnectionData);
+        string connectionString = RepositoryCache.GetConnectionString(projectConnectionData);
 
         var validateResult = await ValidateCreateAsync(projectConnectionData, dataObject, cancellationToken);
         if (validateResult.ResultCode == ResultCode.Failure)
@@ -42,9 +42,9 @@ public sealed class TaskStorageDataLayer : StorageDataLayer<TaskItem>
         return new CreateResult<TaskItem>(ResultCode.Success, dataObject);
     }
 
-    public override async Task<DeleteResult> DeleteAsync(ProjectConnectionData projectConnectionData, uint id, CancellationToken cancellationToken)
+    public async Task<DeleteResult> DeleteAsync(ProjectConnectionData projectConnectionData, uint id, CancellationToken cancellationToken)
     {
-        string connectionString = GetConnectionString(projectConnectionData);
+        string connectionString = RepositoryCache.GetConnectionString(projectConnectionData);
 
         using var connection = new SqliteConnection(connectionString);
         await connection.OpenAsync(cancellationToken);
@@ -57,9 +57,9 @@ public sealed class TaskStorageDataLayer : StorageDataLayer<TaskItem>
         return new DeleteResult(ResultCode.Success, id);
     }
 
-    public override async Task<UpdateResult<TaskItem>> UpdateAsync(ProjectConnectionData projectConnectionData, TaskItem dataObject, CancellationToken cancellationToken)
+    public async Task<UpdateResult<TaskItem>> UpdateAsync(ProjectConnectionData projectConnectionData, TaskItem dataObject, CancellationToken cancellationToken)
     {
-        string connectionString = GetConnectionString(projectConnectionData);
+        string connectionString = RepositoryCache.GetConnectionString(projectConnectionData);
 
         var validateResult = await ValidateUpdateAsync(projectConnectionData, dataObject, cancellationToken);
         if (validateResult.ResultCode == ResultCode.Failure)
@@ -82,9 +82,9 @@ public sealed class TaskStorageDataLayer : StorageDataLayer<TaskItem>
         return new UpdateResult<TaskItem>(ResultCode.Success, dataObject);
     }
 
-    public override async Task<ValidateResult> ValidateCreateAsync(ProjectConnectionData projectConnectionData, TaskItem dataObject, CancellationToken cancellationToken)
+    public async Task<ValidateResult> ValidateCreateAsync(ProjectConnectionData projectConnectionData, TaskItem dataObject, CancellationToken cancellationToken)
     {
-        string connectionString = GetConnectionString(projectConnectionData);
+        string connectionString = RepositoryCache.GetConnectionString(projectConnectionData);
 
         using var connection = new SqliteConnection(connectionString);
         await connection.OpenAsync(cancellationToken);
@@ -100,9 +100,9 @@ public sealed class TaskStorageDataLayer : StorageDataLayer<TaskItem>
         return new ValidateResult(ResultCode.Success, dataObject.Id);
     }
 
-    public override async Task<ValidateResult> ValidateUpdateAsync(ProjectConnectionData projectConnectionData, TaskItem dataObject, CancellationToken cancellationToken)
+    public async Task<ValidateResult> ValidateUpdateAsync(ProjectConnectionData projectConnectionData, TaskItem dataObject, CancellationToken cancellationToken)
     {
-        string connectionString = GetConnectionString(projectConnectionData);
+        string connectionString = RepositoryCache.GetConnectionString(projectConnectionData);
 
         using var connection = new SqliteConnection(connectionString);
         await connection.OpenAsync(cancellationToken);
@@ -129,9 +129,9 @@ public sealed class TaskStorageDataLayer : StorageDataLayer<TaskItem>
         return new ValidateResult(ResultCode.Success, dataObject.Id);
     }
 
-    public override async Task<GetSingleResult<TaskItem>> GetSingleAsync(ProjectConnectionData projectConnectionData, uint id, CancellationToken cancellationToken)
+    public async Task<GetSingleResult<TaskItem>> GetSingleAsync(ProjectConnectionData projectConnectionData, uint id, CancellationToken cancellationToken)
     {
-        string connectionString = GetConnectionString(projectConnectionData);
+        string connectionString = RepositoryCache.GetConnectionString(projectConnectionData);
 
         using var connection = new SqliteConnection(connectionString);
         await connection.OpenAsync(cancellationToken);
@@ -153,9 +153,9 @@ public sealed class TaskStorageDataLayer : StorageDataLayer<TaskItem>
         return new GetSingleResult<TaskItem>(ResultCode.Failure, id, null, "Failed to get task from storage.");
     }
 
-    public override async Task<GetManyResult<TaskItem>> GetAllAsync(ProjectConnectionData projectConnectionData, CancellationToken cancellationToken)
+    public async Task<GetManyResult<TaskItem>> GetAllAsync(ProjectConnectionData projectConnectionData, CancellationToken cancellationToken)
     {
-        string connectionString = GetConnectionString(projectConnectionData);
+        string connectionString = RepositoryCache.GetConnectionString(projectConnectionData);
 
         var tasks = new List<TaskItem>();
         using var connection = new SqliteConnection(connectionString);

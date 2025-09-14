@@ -3,27 +3,27 @@ using Taskiea.Core.Results;
 
 namespace Taskiea.Core.Accounts;
 
-public sealed class UserStorageDataLayer : StorageDataLayer<User>
+public sealed class UserRepositorySqlite : IUserRepository
 {
-    public override void Initialize(ProjectConnectionData projectConnectionData)
+    public void Initialize(ProjectConnectionData projectConnectionData)
     {
-        string connectionString = GetConnectionString(projectConnectionData);
+        string connectionString = RepositoryCache.GetConnectionString(projectConnectionData);
 
         using var connection = new SqliteConnection(connectionString);
         connection.Open();
 
         var command = connection.CreateCommand();
         command.CommandText = @"
-            CREATE TABLE IF NOT EXISTS Users (
-                Id INTEGER PRIMARY KEY AUTOINCREMENT,
-                Name TEXT NOT NULL
-            );";
+        CREATE TABLE IF NOT EXISTS Users (
+            Id INTEGER PRIMARY KEY AUTOINCREMENT,
+            Name TEXT NOT NULL
+        );";
         command.ExecuteNonQuery();
     }
 
-    public override async Task<CreateResult<User>> CreateAsync(ProjectConnectionData projectConnectionData, User dataObject, CancellationToken cancellationToken)
+    public async Task<CreateResult<User>> CreateAsync(ProjectConnectionData projectConnectionData, User dataObject, CancellationToken cancellationToken)
     {
-        string connectionString = GetConnectionString(projectConnectionData);
+        string connectionString = RepositoryCache.GetConnectionString(projectConnectionData);
 
         var validateResult = await ValidateCreateAsync(projectConnectionData, dataObject, cancellationToken);
         if (validateResult.ResultCode == ResultCode.Failure)
@@ -42,9 +42,9 @@ public sealed class UserStorageDataLayer : StorageDataLayer<User>
         return new CreateResult<User>(ResultCode.Success, dataObject);
     }
 
-    public override async Task<DeleteResult> DeleteAsync(ProjectConnectionData projectConnectionData, uint id, CancellationToken cancellationToken)
+    public async Task<DeleteResult> DeleteAsync(ProjectConnectionData projectConnectionData, uint id, CancellationToken cancellationToken)
     {
-        string connectionString = GetConnectionString(projectConnectionData);
+        string connectionString = RepositoryCache.GetConnectionString(projectConnectionData);
 
         using var connection = new SqliteConnection(connectionString);
         await connection.OpenAsync(cancellationToken);
@@ -59,9 +59,9 @@ public sealed class UserStorageDataLayer : StorageDataLayer<User>
         return new DeleteResult(ResultCode.Success, id);
     }
 
-    public override async Task<UpdateResult<User>> UpdateAsync(ProjectConnectionData projectConnectionData, User dataObject, CancellationToken cancellationToken)
+    public async Task<UpdateResult<User>> UpdateAsync(ProjectConnectionData projectConnectionData, User dataObject, CancellationToken cancellationToken)
     {
-        string connectionString = GetConnectionString(projectConnectionData);
+        string connectionString = RepositoryCache.GetConnectionString(projectConnectionData);
 
         var validateResult = await ValidateUpdateAsync(projectConnectionData, dataObject, cancellationToken);
         if (validateResult.ResultCode == ResultCode.Failure)
@@ -82,9 +82,9 @@ public sealed class UserStorageDataLayer : StorageDataLayer<User>
         return new UpdateResult<User>(ResultCode.Success, dataObject);
     }
 
-    public override async Task<ValidateResult> ValidateCreateAsync(ProjectConnectionData projectConnectionData, User dataObject, CancellationToken cancellationToken)
+    public async Task<ValidateResult> ValidateCreateAsync(ProjectConnectionData projectConnectionData, User dataObject, CancellationToken cancellationToken)
     {
-        string connectionString = GetConnectionString(projectConnectionData);
+        string connectionString = RepositoryCache.GetConnectionString(projectConnectionData);
 
         using var connection = new SqliteConnection(connectionString);
         await connection.OpenAsync(cancellationToken);
@@ -102,9 +102,9 @@ public sealed class UserStorageDataLayer : StorageDataLayer<User>
         return new ValidateResult(ResultCode.Success, dataObject.Id);
     }
 
-    public override async Task<ValidateResult> ValidateUpdateAsync(ProjectConnectionData projectConnectionData, User dataObject, CancellationToken cancellationToken)
+    public async Task<ValidateResult> ValidateUpdateAsync(ProjectConnectionData projectConnectionData, User dataObject, CancellationToken cancellationToken)
     {
-        string connectionString = GetConnectionString(projectConnectionData);
+        string connectionString = RepositoryCache.GetConnectionString(projectConnectionData);
 
         using var connection = new SqliteConnection(connectionString);
         await connection.OpenAsync(cancellationToken);
@@ -137,9 +137,9 @@ public sealed class UserStorageDataLayer : StorageDataLayer<User>
         return new ValidateResult(ResultCode.Success, dataObject.Id);
     }
 
-    public override async Task<GetSingleResult<User>> GetSingleAsync(ProjectConnectionData projectConnectionData, uint id, CancellationToken cancellationToken)
+    public async Task<GetSingleResult<User>> GetSingleAsync(ProjectConnectionData projectConnectionData, uint id, CancellationToken cancellationToken)
     {
-        string connectionString = GetConnectionString(projectConnectionData);
+        string connectionString = RepositoryCache.GetConnectionString(projectConnectionData);
 
         using var connection = new SqliteConnection(connectionString);
         await connection.OpenAsync(cancellationToken);
@@ -159,9 +159,9 @@ public sealed class UserStorageDataLayer : StorageDataLayer<User>
         return new GetSingleResult<User>(ResultCode.Failure, id, null, "Failed to get user from storage.");
     }
 
-    public override async Task<GetManyResult<User>> GetAllAsync(ProjectConnectionData projectConnectionData, CancellationToken cancellationToken)
+    public async Task<GetManyResult<User>> GetAllAsync(ProjectConnectionData projectConnectionData, CancellationToken cancellationToken)
     {
-        string connectionString = GetConnectionString(projectConnectionData);
+        string connectionString = RepositoryCache.GetConnectionString(projectConnectionData);
 
         using var connection = new SqliteConnection(connectionString);
         await connection.OpenAsync(cancellationToken);

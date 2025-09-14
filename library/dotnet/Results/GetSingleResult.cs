@@ -1,6 +1,6 @@
 ﻿namespace Taskiea.Core.Results;
 
-public class GetSingleResult<T> where T : IDataObject
+public class GetSingleResult<T> where T : IEntity
 {
     public ResultCode ResultCode { get; init; }
     public uint Id { get; init; }

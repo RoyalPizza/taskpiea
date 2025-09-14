@@ -1,6 +1,6 @@
 ﻿namespace Taskiea.Core.Results;
 
-public sealed class UpdateResult<T> where T : IDataObject
+public sealed class UpdateResult<T> where T : IEntity
 {
     public ResultCode ResultCode { get; init; }
     public T? DataObject { get; init; }

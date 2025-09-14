@@ -2,8 +2,12 @@
 
 namespace Taskiea.Core;
 
-public interface ICRUDDataLayer<T> where T : IDataObject
+public interface IRepository<T> where T : IEntity
 {
+    // this is so each datalayer can init their storage method (like make tables)
+    void Initialize(ProjectConnectionData projectConnectionData);
+
+    // standard CRUD ops
     Task<CreateResult<T>> CreateAsync(ProjectConnectionData projectConnectionData, T dataObject, CancellationToken cancellationToken);
     Task<DeleteResult> DeleteAsync(ProjectConnectionData projectConnectionData, uint id, CancellationToken cancellationToken);
     Task<UpdateResult<T>> UpdateAsync(ProjectConnectionData projectConnectionData, T dataObject, CancellationToken cancellationToken);
@@ -12,7 +16,7 @@ public interface ICRUDDataLayer<T> where T : IDataObject
     Task<ValidateResult> ValidateCreateAsync(ProjectConnectionData projectConnectionData, T dataObject, CancellationToken cancellationToken);
     Task<ValidateResult> ValidateUpdateAsync(ProjectConnectionData projectConnectionData, T dataObject, CancellationToken cancellationToken);
 
-    // TODO: The gets do not use result wrappers. Decide if this is good or bad
+    // standard get ops
     Task<GetSingleResult<T>> GetSingleAsync(ProjectConnectionData projectConnectionData, uint id, CancellationToken cancellationToken);
     Task<GetManyResult<T>> GetAllAsync(ProjectConnectionData projectConnectionData, CancellationToken cancellationToken);
 }

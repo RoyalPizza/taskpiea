@@ -1,6 +1,6 @@
 ﻿namespace Taskiea.Core.Tasks;
 
-public sealed class TaskItem : IDataObject
+public sealed class TaskItem : IEntity
 {
     public uint Id { get; set; }
 

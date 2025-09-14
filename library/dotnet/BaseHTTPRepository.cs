@@ -5,12 +5,12 @@ using Taskiea.Core.Results;
 
 namespace Taskiea.Core;
 
-public abstract class HTTPDataLayer<T> : ICRUDDataLayer<T> where T : IDataObject
+public abstract class BaseHTTPRepository<T> where T : IEntity
 {
     private HttpClient _httpClient;
     private readonly string _typeName = typeof(T).Name;
 
-    public HTTPDataLayer(HttpClient httpClient)
+    public BaseHTTPRepository(HttpClient httpClient)
     {
         _httpClient = httpClient;
     }

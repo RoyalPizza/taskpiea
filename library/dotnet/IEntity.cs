@@ -1,6 +1,6 @@
 ﻿namespace Taskiea.Core;
 
-public interface IDataObject
+public interface IEntity
 {
     public uint GetId();
 }

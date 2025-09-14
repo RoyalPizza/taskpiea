@@ -19,7 +19,7 @@ namespace dotnet_test
             _projectConnectionData = new ProjectConnectionData(project.Name);
 
             // The app decides if it wants HTTP or Storage at this time
-            _userDataLayer = new UserStorageDataLayer();
+            _userDataLayer = new UserRepositorySqlite();
             _taskDataLayer = new TaskStorageDataLayer();
 
             // These need to be called

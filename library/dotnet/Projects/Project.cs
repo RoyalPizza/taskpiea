@@ -1,14 +1,8 @@
 ﻿namespace Taskiea.Core.Projects;
 
-public class Project : IDataObject
+public class Project : IEntity
 {
     public string Name { get; init; } = "";
-
-    public Project() { }
-    public Project(string name, string storageConnectionString = "")
-    {
-        Name = name;
-    }
 
     public uint GetId()
     {
