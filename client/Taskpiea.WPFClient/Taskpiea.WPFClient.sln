@@ -3,9 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.14.36429.23 d17.14
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Taskiea.WPFClient", "Taskiea.WPFClient.csproj", "{1E4D725A-56FA-4FAB-B9E1-4AC5D12074DB}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Taskpiea.WPFClient", "Taskpiea.WPFClient.csproj", "{1E4D725A-56FA-4FAB-B9E1-4AC5D12074DB}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Taskiea.Core", "..\..\library\dotnet\Taskiea.Core.csproj", "{CFFA38A7-2FE9-FCF7-7BF1-AE810A6C0333}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Taskpiea.Core", "..\..\library\dotnet\Taskpiea.Core.csproj", "{CFFA38A7-2FE9-FCF7-7BF1-AE810A6C0333}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

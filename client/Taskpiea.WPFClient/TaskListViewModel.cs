@@ -1,10 +1,10 @@
 ﻿using CommunityToolkit.Mvvm.Input;
 using System.ComponentModel;
 using System.Windows.Data;
-using Taskiea.Core.Results;
-using Taskiea.Core.Tasks;
+using Taskpiea.Core.Results;
+using Taskpiea.Core.Tasks;
 
-namespace Taskiea.WPFClient;
+namespace Taskpiea.WPFClient;
 
 public class TaskListViewModel : INotifyPropertyChanged
 {

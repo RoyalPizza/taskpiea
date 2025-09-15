@@ -1,4 +1,4 @@
-﻿namespace Taskiea.Core.Accounts;
+﻿namespace Taskpiea.Core.Accounts;
 
 public sealed class User : IEntity
 {

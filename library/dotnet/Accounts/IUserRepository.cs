@@ -1,4 +1,4 @@
-﻿namespace Taskiea.Core.Accounts;
+﻿namespace Taskpiea.Core.Accounts;
 
 public interface IUserRepository : IRepository<User>
 {

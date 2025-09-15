@@ -1,11 +1,11 @@
-﻿using Taskiea.Core.Accounts;
-using Taskiea.Core.Connections;
-using Taskiea.Core.Tasks;
+﻿using Taskpiea.Core.Accounts;
+using Taskpiea.Core.Connections;
+using Taskpiea.Core.Tasks;
 
-namespace Taskiea.Core;
+namespace Taskpiea.Core;
 
 /// <summary>
-/// 
+/// TODO
 /// </summary>
 /// <remarks>
 /// By nature, only one connection type is supported at a time.
@@ -18,24 +18,24 @@ public class RepositoryManager : IRepositoryManager
     //       may try to register / get the wrong type.
     //       Is there a way to store type but only allow type <IRepository>
     private readonly Dictionary<Type, IRepository> _repositories = new();
-    private HttpClient? _httpClient;
+    private IConnectionCache _connectionCache;
 
-    public RepositoryManager(BaseConnectionData connectionData)
+    public RepositoryManager(IConnectionCache connectionCache, BaseConnectionData connectionData)
     {
+        ArgumentNullException.ThrowIfNull(connectionCache);
+
+        _connectionCache = connectionCache;
+
         if (connectionData is SqliteConnectionData sqliteConnectionData)
         {
-            Register<IUserRepository>(new UserRepositorySqlite());
-            Register<ITaskRepository>(new TaskRepositorySqlite());
+            Register<IUserRepository>(new UserRepositorySqlite(connectionCache));
+            Register<ITaskRepository>(new TaskRepositorySqlite(connectionCache));
         }
 
         else if (connectionData is HTTPConnectionData httpConnectionData)
         {
-            // TODO: Decide if I want to allow the client to make the client instead
-            // TODO: Add error checks incase endpoint is invalid?
-            _httpClient = new HttpClient() { BaseAddress = new Uri(httpConnectionData.Endpoint) };
-
-            Register<IUserRepository>(new UserRepositoryHTTP());
-            Register<ITaskRepository>(new TaskRepositoryHTTP());
+            Register<IUserRepository>(new UserRepositoryHTTP(connectionCache));
+            Register<ITaskRepository>(new TaskRepositoryHTTP(connectionCache));
         }
 
         InitializeAll(connectionData);

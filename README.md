@@ -1,5 +1,5 @@
-# Taskiea
-Taskiea is my take on a very simple task management tool. It can run as server/client or standalone.
+# Taskpiea
+Taskpiea is my take on a very simple task management tool. It can run as server/client or standalone.
 
 Feature wise, it will remain very simple and "featureless". I value simplicity, and believe that it is the most
 effictive way to manage.

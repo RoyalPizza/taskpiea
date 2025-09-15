@@ -1,4 +1,4 @@
-﻿namespace Taskiea.Core;
+﻿namespace Taskpiea.Core;
 
 public interface IRepositoryManager
 {

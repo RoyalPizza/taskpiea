@@ -1,10 +1,9 @@
-﻿using Taskiea.Core.Results;
+﻿using Taskpiea.Core.Results;
 
-namespace Taskiea.Core;
+namespace Taskpiea.Core;
 
 public interface IRepository
 {
-    // this is so each datalayer can init their storage method (like make tables)
     void Initialize(string project);
 }
 

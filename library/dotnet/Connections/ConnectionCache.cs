@@ -1,23 +1,48 @@
 ﻿using System.Collections.Concurrent;
 
-namespace Taskiea.Core.Connections;
+namespace Taskpiea.Core.Connections;
 
-public static class ConnectionCache
+/// <summary>
+/// A class to hold connections that are used by repositories.
+/// Register a connection to keep it around as long as needed.
+/// If a connection is no longer needed, unregister it.
+/// Connections are unique based on proejct name.
+/// </summary>
+public class ConnectionCache : IConnectionCache
 {
-    private static readonly ConcurrentDictionary<string, BaseConnectionData> _connectionStringCache = new();
+    private readonly ConcurrentDictionary<string, BaseConnectionData> _connectionCache = new();
 
-    public static T GetConnectionData<T>(string projectName) where T : BaseConnectionData
+    public void Register<TConnection>(TConnection connection) where TConnection : BaseConnectionData
     {
-        if (_connectionStringCache.TryGetValue(projectName, out var cachedConnectionData))
+        ArgumentNullException.ThrowIfNull(connection);
+        if (_connectionCache.ContainsKey(connection.ProjectName))
+            throw new Exception("Connection already exists for that project name.");
+
+        _connectionCache[connection.ProjectName] = connection;
+    }
+
+    public void Unregister(string projectName)
+    {
+        _ = _connectionCache.TryRemove(projectName, out var cachedConnectionData);
+        cachedConnectionData?.Dispose();
+    }
+
+    public void UnregisterAll()
+    {
+        foreach (var connectionData in _connectionCache.Values)
+            Unregister(connectionData.ProjectName);
+    }
+
+    public T? GetConnectionData<T>(string projectName) where T : BaseConnectionData
+    {
+        if (_connectionCache.TryGetValue(projectName, out var cachedConnectionData))
             return (T)cachedConnectionData;
 
-        // TODO: Maybe put this in a register/unregister system?
-        if (typeof(T) == typeof(SqliteConnectionData))
-        {
-            _connectionStringCache[projectName] = new SqliteConnectionData(projectName, null);
-            return (T)_connectionStringCache[projectName];
-        }
+        return null;
+    }
 
-        throw new NotSupportedException();
+    public void Dispose()
+    {
+        UnregisterAll();
     }
 }
