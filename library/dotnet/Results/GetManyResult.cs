@@ -1,6 +1,6 @@
 ﻿namespace Taskiea.Core.Results;
 
-public class GetManyResult<T> where T : IDataObject
+public class GetManyResult<T> where T : IEntity
 {
     public ResultCode ResultCode { get; init; }
     public List<T> DataObjects { get; set; } = new List<T>();
