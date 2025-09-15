@@ -6,16 +6,20 @@ using Taskiea.Core.Results;
 
 namespace Taskiea.Core;
 
-public abstract class BaseHTTPRepository<TEntity> : IRepository<TEntity> where TEntity : IEntity
+public abstract class BaseHTTPRepository<TEntity> : BaseRepository, IRepository<TEntity> where TEntity : IEntity
 {
-    private HTTPConnectionData _connectionData;
-    private HttpClient _httpClient = null!;
-    private readonly string _typeName = typeof(TEntity).Name;
+    private string _typeName;
 
-    public void Initialize(string project)
+    protected BaseHTTPRepository(IConnectionCache connectionCache) : base(connectionCache)
     {
-        _connectionData = ConnectionCache.GetConnectionData<HTTPConnectionData>(project);
-        _httpClient = _connectionData.HttpClient;
+        _typeName = typeof(TEntity).Name;
+    }
+
+    private HTTPConnectionData? GetConnectionData(string project) => _connectionCache.GetConnectionData<HTTPConnectionData>(project);
+
+    public override void Initialize(string project)
+    {
+
     }
 
     protected static void AddProjectToRequest(HttpRequestMessage request, HTTPConnectionData connectionData)
@@ -28,12 +32,18 @@ public abstract class BaseHTTPRepository<TEntity> : IRepository<TEntity> where T
     {
         ArgumentNullException.ThrowIfNull(entity);
 
+        var connectionData = GetConnectionData(project);
+        if (connectionData == null)
+            return new CreateResult<TEntity>(ResultCode.Failure, entity, "Failed to retrieve connection data.");
+        if (connectionData.HttpClient == null)
+            return new CreateResult<TEntity>(ResultCode.Failure, entity, "No HTTP client configured.");
+
         // TODO: Update all other HTTP functions to have this request style
         var request = new HttpRequestMessage(HttpMethod.Post, $"api/{_typeName}");
-        AddProjectToRequest(request, _connectionData);
+        AddProjectToRequest(request, connectionData);
         request.Content = new StringContent(JsonSerializer.Serialize(entity), Encoding.UTF8, "application/json");
 
-        HttpResponseMessage response = await _httpClient.SendAsync(request, cancellationToken);
+        HttpResponseMessage response = await connectionData.HttpClient.SendAsync(request, cancellationToken);
 
         if (response.IsSuccessStatusCode)
         {
@@ -48,10 +58,16 @@ public abstract class BaseHTTPRepository<TEntity> : IRepository<TEntity> where T
 
     public async Task<DeleteResult> DeleteAsync(string project, uint id, CancellationToken cancellationToken = default)
     {
-        var request = new HttpRequestMessage(HttpMethod.Delete, $"api/{_typeName}/{id}");
-        AddProjectToRequest(request, _connectionData);
+        var connectionData = GetConnectionData(project);
+        if (connectionData == null)
+            return new DeleteResult(ResultCode.Failure, id, "Failed to retrieve connection data.");
+        if (connectionData.HttpClient == null)
+            return new DeleteResult(ResultCode.Failure, id, "No HTTP client configured.");
 
-        HttpResponseMessage response = await _httpClient.SendAsync(request, cancellationToken);
+        var request = new HttpRequestMessage(HttpMethod.Delete, $"api/{_typeName}/{id}");
+        AddProjectToRequest(request, connectionData);
+
+        HttpResponseMessage response = await connectionData.HttpClient.SendAsync(request, cancellationToken);
 
         if (response.IsSuccessStatusCode)
         {
@@ -68,11 +84,17 @@ public abstract class BaseHTTPRepository<TEntity> : IRepository<TEntity> where T
     {
         ArgumentNullException.ThrowIfNull(entity);
 
+        var connectionData = GetConnectionData(project);
+        if (connectionData == null)
+            return new UpdateResult<TEntity>(ResultCode.Failure, entity, "Failed to retrieve connection data.");
+        if (connectionData.HttpClient == null)
+            return new UpdateResult<TEntity>(ResultCode.Failure, entity, "No HTTP client configured.");
+
         var request = new HttpRequestMessage(HttpMethod.Put, $"api/{_typeName}");
-        AddProjectToRequest(request, _connectionData);
+        AddProjectToRequest(request, connectionData);
         request.Content = new StringContent(JsonSerializer.Serialize(entity), Encoding.UTF8, "application/json");
 
-        HttpResponseMessage response = await _httpClient.SendAsync(request, cancellationToken);
+        HttpResponseMessage response = await connectionData.HttpClient.SendAsync(request, cancellationToken);
 
         if (response.IsSuccessStatusCode)
         {
@@ -89,11 +111,17 @@ public abstract class BaseHTTPRepository<TEntity> : IRepository<TEntity> where T
     {
         ArgumentNullException.ThrowIfNull(entity);
 
+        var connectionData = GetConnectionData(project);
+        if (connectionData == null)
+            return new ValidateResult(ResultCode.Failure, entity.GetId(), "Failed to retrieve connection data.");
+        if (connectionData.HttpClient == null)
+            return new ValidateResult(ResultCode.Failure, entity.GetId(), "No HTTP client configured.");
+
         var request = new HttpRequestMessage(HttpMethod.Post, $"api/{_typeName}/Validate");
-        AddProjectToRequest(request, _connectionData);
+        AddProjectToRequest(request, connectionData);
         request.Content = new StringContent(JsonSerializer.Serialize(entity), Encoding.UTF8, "application/json");
 
-        HttpResponseMessage response = await _httpClient.SendAsync(request, cancellationToken);
+        HttpResponseMessage response = await connectionData.HttpClient.SendAsync(request, cancellationToken);
 
         if (response.IsSuccessStatusCode)
         {
@@ -110,11 +138,17 @@ public abstract class BaseHTTPRepository<TEntity> : IRepository<TEntity> where T
     {
         ArgumentNullException.ThrowIfNull(entity);
 
+        var connectionData = GetConnectionData(project);
+        if (connectionData == null)
+            return new ValidateResult(ResultCode.Failure, entity.GetId(), "Failed to retrieve connection data.");
+        if (connectionData.HttpClient == null)
+            return new ValidateResult(ResultCode.Failure, entity.GetId(), "No HTTP client configured.");
+
         var request = new HttpRequestMessage(HttpMethod.Put, $"api/{_typeName}/Validate");
-        AddProjectToRequest(request, _connectionData);
+        AddProjectToRequest(request, connectionData);
         request.Content = new StringContent(JsonSerializer.Serialize(entity), Encoding.UTF8, "application/json");
 
-        HttpResponseMessage response = await _httpClient.SendAsync(request, cancellationToken);
+        HttpResponseMessage response = await connectionData.HttpClient.SendAsync(request, cancellationToken);
 
         if (response.IsSuccessStatusCode)
         {
@@ -129,10 +163,16 @@ public abstract class BaseHTTPRepository<TEntity> : IRepository<TEntity> where T
 
     public async Task<GetSingleResult<TEntity>> GetSingleAsync(string project, uint id, CancellationToken cancellationToken = default)
     {
-        var request = new HttpRequestMessage(HttpMethod.Get, $"api/{_typeName}/Single/{id}");
-        AddProjectToRequest(request, _connectionData);
+        var connectionData = GetConnectionData(project);
+        if (connectionData == null)
+            return new GetSingleResult<TEntity>(ResultCode.Failure, id, default(TEntity), "Failed to retrieve connection data.");
+        if (connectionData.HttpClient == null)
+            return new GetSingleResult<TEntity>(ResultCode.Failure, id, default(TEntity), "No HTTP client configured.");
 
-        HttpResponseMessage response = await _httpClient.SendAsync(request, cancellationToken);
+        var request = new HttpRequestMessage(HttpMethod.Get, $"api/{_typeName}/Single/{id}");
+        AddProjectToRequest(request, connectionData);
+
+        HttpResponseMessage response = await connectionData.HttpClient.SendAsync(request, cancellationToken);
 
         if (response.IsSuccessStatusCode)
         {
@@ -147,10 +187,16 @@ public abstract class BaseHTTPRepository<TEntity> : IRepository<TEntity> where T
 
     public async Task<GetManyResult<TEntity>> GetAllAsync(string project, CancellationToken cancellationToken = default)
     {
-        var request = new HttpRequestMessage(HttpMethod.Get, $"api/{_typeName}/All");
-        AddProjectToRequest(request, _connectionData);
+        var connectionData = GetConnectionData(project);
+        if (connectionData == null)
+            return new GetManyResult<TEntity>(ResultCode.Failure, "Failed to retrieve connection data.");
+        if (connectionData.HttpClient == null)
+            return new GetManyResult<TEntity>(ResultCode.Failure, "No HTTP client configured.");
 
-        HttpResponseMessage response = await _httpClient.SendAsync(request, cancellationToken);
+        var request = new HttpRequestMessage(HttpMethod.Get, $"api/{_typeName}/All");
+        AddProjectToRequest(request, connectionData);
+
+        HttpResponseMessage response = await connectionData.HttpClient.SendAsync(request, cancellationToken);
 
         if (response.IsSuccessStatusCode)
         {

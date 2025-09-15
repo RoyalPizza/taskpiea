@@ -4,11 +4,20 @@ using Taskiea.Core.Results;
 
 namespace Taskiea.Core.Accounts;
 
-public sealed class UserRepositorySqlite : IUserRepository
+public sealed class UserRepositorySqlite : BaseRepository, IUserRepository
 {
-    public void Initialize(string project)
+    public UserRepositorySqlite(IConnectionCache connectionCache) : base(connectionCache)
     {
-        string connectionString = ConnectionCache.GetConnectionData<SqliteConnectionData>(project).ConnectionString;
+
+    }
+
+    public override void Initialize(string project)
+    {
+        var connectionData = _connectionCache.GetConnectionData<SqliteConnectionData>(project);
+        if (connectionData == null)
+            return;
+
+        string connectionString = connectionData.ConnectionString;
         using var connection = new SqliteConnection(connectionString);
         connection.Open();
 
@@ -23,11 +32,15 @@ public sealed class UserRepositorySqlite : IUserRepository
 
     public async Task<CreateResult<User>> CreateAsync(string project, User entity, CancellationToken cancellationToken = default)
     {
+        var connectionData = _connectionCache.GetConnectionData<SqliteConnectionData>(project);
+        if (connectionData == null)
+            return new CreateResult<User>(ResultCode.Failure, entity, "Failed to retrieve connection data.");
+
         var validateResult = await ValidateCreateAsync(project, entity, cancellationToken);
         if (validateResult.ResultCode == ResultCode.Failure)
             return new CreateResult<User>(ResultCode.Failure, entity, "Validation failed.");
 
-        string connectionString = ConnectionCache.GetConnectionData<SqliteConnectionData>(project).ConnectionString;
+        string connectionString = connectionData.ConnectionString;
         using var connection = new SqliteConnection(connectionString);
         await connection.OpenAsync(cancellationToken);
 
@@ -43,7 +56,11 @@ public sealed class UserRepositorySqlite : IUserRepository
 
     public async Task<DeleteResult> DeleteAsync(string project, uint id, CancellationToken cancellationToken = default)
     {
-        string connectionString = ConnectionCache.GetConnectionData<SqliteConnectionData>(project).ConnectionString;
+        var connectionData = _connectionCache.GetConnectionData<SqliteConnectionData>(project);
+        if (connectionData == null)
+            return new DeleteResult(ResultCode.Failure, id, "Failed to retrieve connection data.");
+
+        string connectionString = connectionData.ConnectionString;
         using var connection = new SqliteConnection(connectionString);
         await connection.OpenAsync(cancellationToken);
         var command = connection.CreateCommand();
@@ -59,11 +76,15 @@ public sealed class UserRepositorySqlite : IUserRepository
 
     public async Task<UpdateResult<User>> UpdateAsync(string project, User entity, CancellationToken cancellationToken = default)
     {
+        var connectionData = _connectionCache.GetConnectionData<SqliteConnectionData>(project);
+        if (connectionData == null)
+            return new UpdateResult<User>(ResultCode.Failure, entity, "Failed to retrieve connection data.");
+
         var validateResult = await ValidateUpdateAsync(project, entity, cancellationToken);
         if (validateResult.ResultCode == ResultCode.Failure)
             return new UpdateResult<User>(ResultCode.Failure, entity, "Validation failed.");
 
-        string connectionString = ConnectionCache.GetConnectionData<SqliteConnectionData>(project).ConnectionString;
+        string connectionString = connectionData.ConnectionString;
         using var connection = new SqliteConnection(connectionString);
         await connection.OpenAsync(cancellationToken);
 
@@ -81,7 +102,11 @@ public sealed class UserRepositorySqlite : IUserRepository
 
     public async Task<ValidateResult> ValidateCreateAsync(string project, User entity, CancellationToken cancellationToken = default)
     {
-        string connectionString = ConnectionCache.GetConnectionData<SqliteConnectionData>(project).ConnectionString;
+        var connectionData = _connectionCache.GetConnectionData<SqliteConnectionData>(project);
+        if (connectionData == null)
+            return new ValidateResult(ResultCode.Failure, entity.GetId(), "Failed to retrieve connection data.");
+
+        string connectionString = connectionData.ConnectionString;
         using var connection = new SqliteConnection(connectionString);
         await connection.OpenAsync(cancellationToken);
         var command = connection.CreateCommand();
@@ -100,7 +125,11 @@ public sealed class UserRepositorySqlite : IUserRepository
 
     public async Task<ValidateResult> ValidateUpdateAsync(string project, User entity, CancellationToken cancellationToken = default)
     {
-        string connectionString = ConnectionCache.GetConnectionData<SqliteConnectionData>(project).ConnectionString;
+        var connectionData = _connectionCache.GetConnectionData<SqliteConnectionData>(project);
+        if (connectionData == null)
+            return new ValidateResult(ResultCode.Failure, entity.GetId(), "Failed to retrieve connection data.");
+
+        string connectionString = connectionData.ConnectionString;
         using var connection = new SqliteConnection(connectionString);
         await connection.OpenAsync(cancellationToken);
 
@@ -134,7 +163,11 @@ public sealed class UserRepositorySqlite : IUserRepository
 
     public async Task<GetSingleResult<User>> GetSingleAsync(string project, uint id, CancellationToken cancellationToken = default)
     {
-        string connectionString = ConnectionCache.GetConnectionData<SqliteConnectionData>(project).ConnectionString;
+        var connectionData = _connectionCache.GetConnectionData<SqliteConnectionData>(project);
+        if (connectionData == null)
+            return new GetSingleResult<User>(ResultCode.Failure, id, null, "Failed to retrieve connection data.");
+
+        string connectionString = connectionData.ConnectionString;
         using var connection = new SqliteConnection(connectionString);
         await connection.OpenAsync(cancellationToken);
         var command = connection.CreateCommand();
@@ -155,7 +188,11 @@ public sealed class UserRepositorySqlite : IUserRepository
 
     public async Task<GetManyResult<User>> GetAllAsync(string project, CancellationToken cancellationToken = default)
     {
-        string connectionString = ConnectionCache.GetConnectionData<SqliteConnectionData>(project).ConnectionString;
+        var connectionData = _connectionCache.GetConnectionData<SqliteConnectionData>(project);
+        if (connectionData == null)
+            return new GetManyResult<User>(ResultCode.Failure, new List<User>(), "Failed to retrieve connection data.");
+
+        string connectionString = connectionData.ConnectionString;
         using var connection = new SqliteConnection(connectionString);
         await connection.OpenAsync(cancellationToken);
         using var command = connection.CreateCommand();

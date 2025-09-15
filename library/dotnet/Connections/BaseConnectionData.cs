@@ -1,6 +1,6 @@
 ﻿namespace Taskiea.Core.Connections;
 
-public abstract class BaseConnectionData
+public abstract class BaseConnectionData : IDisposable
 {
     public string ProjectName { get; set; }
 
@@ -9,4 +9,6 @@ public abstract class BaseConnectionData
         ArgumentNullException.ThrowIfNullOrEmpty(projectName);
         ProjectName = projectName;
     }
+
+    public abstract void Dispose();
 }

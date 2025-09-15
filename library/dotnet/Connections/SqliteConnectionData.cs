@@ -5,7 +5,7 @@ public class SqliteConnectionData : BaseConnectionData
     public string? ProjectPath { get; set; }
     public string ConnectionString { get; set; }
 
-    public SqliteConnectionData(string projectName, string? projectPath) : base(projectName)
+    public SqliteConnectionData(string projectName, string? projectPath = null) : base(projectName)
     {
         ProjectPath = projectPath;
 
@@ -18,5 +18,10 @@ public class SqliteConnectionData : BaseConnectionData
             // TODO: validate path (e.g., check if directory exists, sanitize input)
             ConnectionString = $"Data Source={projectPath}/{projectName}.taskp";
         }
+    }
+
+    public override void Dispose()
+    {
+        // nothing to dispose
     }
 }
