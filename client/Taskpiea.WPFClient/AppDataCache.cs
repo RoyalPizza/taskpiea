@@ -1,10 +1,10 @@
 ﻿using System.Collections.ObjectModel;
-using Taskiea.Core;
-using Taskiea.Core.Connections;
-using Taskiea.Core.Projects;
-using Taskiea.Core.Tasks;
+using Taskpiea.Core;
+using Taskpiea.Core.Connections;
+using Taskpiea.Core.Projects;
+using Taskpiea.Core.Tasks;
 
-namespace Taskiea.WPFClient;
+namespace Taskpiea.WPFClient;
 
 public sealed class AppDataCache
 {

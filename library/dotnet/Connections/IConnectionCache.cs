@@ -1,4 +1,4 @@
-﻿namespace Taskiea.Core.Connections;
+﻿namespace Taskpiea.Core.Connections;
 
 public interface IConnectionCache : IDisposable
 {

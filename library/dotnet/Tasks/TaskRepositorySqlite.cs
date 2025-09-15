@@ -1,9 +1,9 @@
 ﻿using Microsoft.Data.Sqlite;
-using Taskiea.Core.Connections;
-using Taskiea.Core.Results;
-using Taskiea.Core.Tasks;
+using Taskpiea.Core.Connections;
+using Taskpiea.Core.Results;
+using Taskpiea.Core.Tasks;
 
-namespace Taskiea.Core;
+namespace Taskpiea.Core;
 
 public sealed class TaskRepositorySqlite : BaseRepository, ITaskRepository
 {

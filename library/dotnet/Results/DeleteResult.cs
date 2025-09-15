@@ -1,4 +1,4 @@
-﻿namespace Taskiea.Core.Results;
+﻿namespace Taskpiea.Core.Results;
 
 public sealed class DeleteResult
 {

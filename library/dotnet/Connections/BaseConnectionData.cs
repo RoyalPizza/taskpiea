@@ -1,4 +1,4 @@
-﻿namespace Taskiea.Core.Connections;
+﻿namespace Taskpiea.Core.Connections;
 
 public abstract class BaseConnectionData : IDisposable
 {

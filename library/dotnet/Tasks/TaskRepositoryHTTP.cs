@@ -1,7 +1,7 @@
-﻿using Taskiea.Core.Connections;
-using Taskiea.Core.Tasks;
+﻿using Taskpiea.Core.Connections;
+using Taskpiea.Core.Tasks;
 
-namespace Taskiea.Core.Accounts
+namespace Taskpiea.Core.Accounts
 {
     public class TaskRepositoryHTTP : BaseHTTPRepository<TaskItem>, ITaskRepository
     {

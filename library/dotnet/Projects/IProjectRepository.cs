@@ -1,4 +1,4 @@
-﻿namespace Taskiea.Core.Projects;
+﻿namespace Taskpiea.Core.Projects;
 
 public interface IProjectRepository<T> : IRepository<Project>
 {

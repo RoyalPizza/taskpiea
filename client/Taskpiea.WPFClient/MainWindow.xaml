@@ -1,0 +1,54 @@
+﻿<Window x:Class="Taskpiea.WPFClient.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Taskpiea.WPFClient"
+        mc:Ignorable="d"
+        Title="MainWindow" Height="768" Width="1024"
+        WindowStyle="None" AllowsTransparency="True">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"  />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto"  />
+        </Grid.RowDefinitions>
+
+        <!-- We use border to create our "window handle" so we can style menu like VS -->
+        <Border Height="30" MouseDown="Border_MouseDown" Background="Transparent">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <Menu VerticalAlignment="Center" Grid.Column="0">
+                    <MenuItem Header="File">
+                        <MenuItem Name="CreateProjectMenuItem" Header="Create Project" Click="CreateProjectMenuItem_Click" />
+                        <MenuItem Name="OpenProjectMenuItem" Header="Open Project" Click="OpenProjectMenuItem_Click" />
+                        <MenuItem Name="CloseProjectMenuItem" Header="Close Project" Click="CloseProjectMenuItem_Click" />
+                        <Separator />
+                    </MenuItem>
+                    <MenuItem Header="Edit" />
+                </Menu>
+
+                <Label Grid.Column="1" Content="Taskpiea" HorizontalAlignment="Center" VerticalAlignment="Center" FontWeight="Bold" FontSize="14"/>
+
+                <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Button Name="MinimizeButton" Content="🗕" Click="MinimizeButton_Click" />
+                    <Button Name="MaximizeButton" Content="🗖" Click="MaximizeButton_Click" />
+                    <Button Name="CloseButton" Content="🗙" Click="CloseButton_Click" />
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!--<ContentControl Grid.Row="1" />-->
+        <local:TaskList Grid.Row="1" />
+
+        <StatusBar Grid.Row="2">
+            <!-- TODO DECIDE IF I WANT THIS -->
+            <Label Content="EXAMPLE" FontSize="8" Margin="0,0,0,0" Padding="0,0,0,0" />
+        </StatusBar>
+    </Grid>
+</Window>

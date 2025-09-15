@@ -1,6 +1,6 @@
 ﻿using System.Windows;
 
-namespace Taskiea.WPFClient
+namespace Taskpiea.WPFClient
 {
     /// <summary>
     /// Interaction logic for App.xaml

@@ -1,4 +1,4 @@
-﻿namespace Taskiea.Core.Tasks;
+﻿namespace Taskpiea.Core.Tasks;
 
 public enum Status
 {

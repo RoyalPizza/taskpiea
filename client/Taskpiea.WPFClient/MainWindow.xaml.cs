@@ -1,7 +1,7 @@
 ﻿using System.Windows;
 using System.Windows.Input;
 
-namespace Taskiea.WPFClient
+namespace Taskpiea.WPFClient
 {
     /// <summary>
     /// Interaction logic for MainWindow.xaml

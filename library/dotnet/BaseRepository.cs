@@ -1,6 +1,6 @@
-﻿using Taskiea.Core.Connections;
+﻿using Taskpiea.Core.Connections;
 
-namespace Taskiea.Core;
+namespace Taskpiea.Core;
 
 public abstract class BaseRepository : IRepository
 {

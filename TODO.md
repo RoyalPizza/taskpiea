@@ -1,5 +1,4 @@
 ## ...
-- update repository manager to support disposal
 - design project creation flow
 - add background sync to AppDataCache
 

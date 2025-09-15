@@ -1,6 +1,6 @@
 ﻿using System.Collections.Concurrent;
 
-namespace Taskiea.Core.Connections;
+namespace Taskpiea.Core.Connections;
 
 /// <summary>
 /// A class to hold connections that are used by repositories.

@@ -1,8 +1,8 @@
 ﻿using Microsoft.Data.Sqlite;
-using Taskiea.Core.Connections;
-using Taskiea.Core.Results;
+using Taskpiea.Core.Connections;
+using Taskpiea.Core.Results;
 
-namespace Taskiea.Core.Accounts;
+namespace Taskpiea.Core.Accounts;
 
 public sealed class UserRepositorySqlite : BaseRepository, IUserRepository
 {

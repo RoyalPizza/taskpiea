@@ -1,8 +1,8 @@
-﻿using Taskiea.Core.Accounts;
-using Taskiea.Core.Connections;
-using Taskiea.Core.Tasks;
+﻿using Taskpiea.Core.Accounts;
+using Taskpiea.Core.Connections;
+using Taskpiea.Core.Tasks;
 
-namespace Taskiea.Core;
+namespace Taskpiea.Core;
 
 /// <summary>
 /// TODO

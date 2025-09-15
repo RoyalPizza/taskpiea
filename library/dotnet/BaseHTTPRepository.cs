@@ -1,10 +1,10 @@
 ﻿using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
-using Taskiea.Core.Connections;
-using Taskiea.Core.Results;
+using Taskpiea.Core.Connections;
+using Taskpiea.Core.Results;
 
-namespace Taskiea.Core;
+namespace Taskpiea.Core;
 
 public abstract class BaseHTTPRepository<TEntity> : BaseRepository, IRepository<TEntity> where TEntity : IEntity
 {

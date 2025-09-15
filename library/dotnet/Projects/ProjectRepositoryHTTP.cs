@@ -1,6 +1,6 @@
-﻿using Taskiea.Core.Connections;
+﻿using Taskpiea.Core.Connections;
 
-namespace Taskiea.Core.Accounts
+namespace Taskpiea.Core.Accounts
 {
     public class ProjectRepositoryHTTP : BaseHTTPRepository<User>
     {

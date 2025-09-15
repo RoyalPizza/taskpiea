@@ -1,6 +1,6 @@
-﻿using Taskiea.Core.Results;
+﻿using Taskpiea.Core.Results;
 
-namespace Taskiea.Core;
+namespace Taskpiea.Core;
 
 public interface IRepository
 {

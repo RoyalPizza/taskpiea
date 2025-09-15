@@ -13,7 +13,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\library\dotnet\Taskiea.Core.csproj" />
+    <ProjectReference Include="..\..\library\dotnet\Taskpiea.Core.csproj" />
   </ItemGroup>
 
   <ItemGroup>
