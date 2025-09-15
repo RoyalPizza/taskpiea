@@ -16,10 +16,15 @@
 
         <!-- We use border to create our "window handle" so we can style menu like VS -->
         <Border Height="30" MouseDown="Border_MouseDown" Background="Transparent">
-            <StackPanel Orientation="Horizontal">
-                <Menu VerticalAlignment="Center">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <Menu VerticalAlignment="Center" Grid.Column="0">
                     <MenuItem Header="File">
-                        
                         <MenuItem Name="CreateProjectMenuItem" Header="Create Project" Click="CreateProjectMenuItem_Click" />
                         <MenuItem Name="OpenProjectMenuItem" Header="Open Project" Click="OpenProjectMenuItem_Click" />
                         <MenuItem Name="CloseProjectMenuItem" Header="Close Project" Click="CloseProjectMenuItem_Click" />
@@ -27,13 +32,19 @@
                     </MenuItem>
                     <MenuItem Header="Edit" />
                 </Menu>
-                <Button Name="MinimizeButton" Content="🗕" Click="MinimizeButton_Click" />
-                <Button Name="MaximizeButton" Content="🗖" Click="MaximizeButton_Click" />
-                <Button Name="CloseButton" Content="🗙" Click="CloseButton_Click" />
-            </StackPanel>
+
+                <Label Grid.Column="1" Content="Taskiea" HorizontalAlignment="Center" VerticalAlignment="Center" FontWeight="Bold" FontSize="14"/>
+
+                <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Button Name="MinimizeButton" Content="🗕" Click="MinimizeButton_Click" />
+                    <Button Name="MaximizeButton" Content="🗖" Click="MaximizeButton_Click" />
+                    <Button Name="CloseButton" Content="🗙" Click="CloseButton_Click" />
+                </StackPanel>
+            </Grid>
         </Border>
-        
-        <ContentControl Grid.Row="1" />
+
+        <!--<ContentControl Grid.Row="1" />-->
+        <local:TaskList Grid.Row="1" />
 
         <StatusBar Grid.Row="2">
             <!-- TODO DECIDE IF I WANT THIS -->

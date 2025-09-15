@@ -13,3 +13,8 @@ I am not using EF for Sqlite, so as of now I think that just mapping properties 
 Additionally, the reason an interace is declared per type is so that a client can just hold a refernce of the interface type and chose to use either HTTP or Sqlite easily.
 
 A RepositoryManager using a semi "service locator pattern" will be used by the client as DI is typically not possible on most UI frameworks. And their might need to be some specific operations called, like all datalayers having initialize called when a new project is created.
+
+## Design Flaws
+- concrete result classes mean that making additional operations a bit odd to add.This really depends more on what unique calls end up being required. Either it will be fine to just create new result classes, or it would have been better to have a generic result. Validation and deletion were really the only two unique ones.
+- connection cache is odd. Because I am not doing one database per server, and instead one database per project with sqlite, I need to support multiple connection strings. Which means each type an API call is made, it needs to do a lookup based on project name.
+- repository manager works differently based on platform. A standalone is expected to dispose and recreate. A server is expected to retain whole lifetime. HTTP clients have to be disposed, but server clients need no such functionality.

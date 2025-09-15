@@ -7,6 +7,6 @@ namespace Taskiea.WPFClient
     /// </summary>
     public partial class App : Application
     {
-    }
 
+    }
 }

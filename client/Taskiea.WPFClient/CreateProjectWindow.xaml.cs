@@ -1,7 +1,5 @@
 ﻿using System.Windows;
 using System.Windows.Input;
-using Taskiea.Core;
-using Taskiea.Core.Projects;
 
 namespace Taskiea.WPFClient
 {
@@ -31,8 +29,8 @@ namespace Taskiea.WPFClient
 
         private void CreateButton_Click(object sender, RoutedEventArgs e)
         {
-            string storageConnectionString = StorageDataLayerUtil.BuildSqliteConnectionString(_projectName);
-            Project _project = new Project(_projectName, storageConnectionString);
+            //string storageConnectionString = StorageDataLayerUtil.BuildSqliteConnectionString(_projectName);
+            //Project _project = new Project(_projectName, storageConnectionString);
         }
     }
 }
