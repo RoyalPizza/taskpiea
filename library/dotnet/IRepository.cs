@@ -11,15 +11,15 @@ public interface IRepository
 public interface IRepository<TEntity> : IRepository where TEntity : IEntity
 {
     // standard CRUD ops
-    Task<CreateResult<TEntity>> CreateAsync(string project, TEntity entity, CancellationToken cancellationToken);
-    Task<DeleteResult> DeleteAsync(string project, uint id, CancellationToken cancellationToken);
-    Task<UpdateResult<TEntity>> UpdateAsync(string project, TEntity entity, CancellationToken cancellationToken);
+    Task<CreateResult<TEntity>> CreateAsync(string project, TEntity entity, CancellationToken cancellationToken = default);
+    Task<DeleteResult> DeleteAsync(string project, uint id, CancellationToken cancellationToken = default);
+    Task<UpdateResult<TEntity>> UpdateAsync(string project, TEntity entity, CancellationToken cancellationToken = default);
 
     // validation is seperate so the client can call it without doing the full operation
-    Task<ValidateResult> ValidateCreateAsync(string project, TEntity entity, CancellationToken cancellationToken);
-    Task<ValidateResult> ValidateUpdateAsync(string project, TEntity entity, CancellationToken cancellationToken);
+    Task<ValidateResult> ValidateCreateAsync(string project, TEntity entity, CancellationToken cancellationToken = default);
+    Task<ValidateResult> ValidateUpdateAsync(string project, TEntity entity, CancellationToken cancellationToken = default);
 
     // standard get ops
-    Task<GetSingleResult<TEntity>> GetSingleAsync(string project, uint id, CancellationToken cancellationToken);
-    Task<GetManyResult<TEntity>> GetAllAsync(string project, CancellationToken cancellationToken);
+    Task<GetSingleResult<TEntity>> GetSingleAsync(string project, uint id, CancellationToken cancellationToken = default);
+    Task<GetManyResult<TEntity>> GetAllAsync(string project, CancellationToken cancellationToken = default);
 }

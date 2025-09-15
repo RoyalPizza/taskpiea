@@ -25,7 +25,7 @@ public sealed class AppDataCache
         _taskRepository = RepositoryManager.Get<ITaskRepository>();
     }
 
-    public async Task Refresh(CancellationToken cancellationToken)
+    public async Task Refresh(CancellationToken cancellationToken = default)
     {
         await _taskRepository.GetAllAsync(Project.Name, cancellationToken);
 

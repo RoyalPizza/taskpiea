@@ -10,7 +10,7 @@ For terminology purposes, classes will basically represent the View object. If a
 
 I am not using EF for Sqlite, so as of now I think that just mapping properties to columns is fine, no need to do model conversion.
 
-Additionally, the reason an interace is declared per type is so that a client can just hold a refernce of the interface type and chose to use either HTTP or Sqlite easily.
+Additionally, the reason an interace is declared per type is so that a client can just hold a reference of the interface type and chose to use either HTTP or Sqlite easily.
 
 A RepositoryManager using a semi "service locator pattern" will be used by the client as DI is typically not possible on most UI frameworks. And their might need to be some specific operations called, like all datalayers having initialize called when a new project is created.
 

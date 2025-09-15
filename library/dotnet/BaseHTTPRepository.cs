@@ -24,7 +24,7 @@ public abstract class BaseHTTPRepository<TEntity> : IRepository<TEntity> where T
         request.Headers.Add("X-Project-Id", connectionData.ProjectName);
     }
 
-    public async Task<CreateResult<TEntity>> CreateAsync(string project, TEntity entity, CancellationToken cancellationToken)
+    public async Task<CreateResult<TEntity>> CreateAsync(string project, TEntity entity, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(entity);
 
@@ -46,7 +46,7 @@ public abstract class BaseHTTPRepository<TEntity> : IRepository<TEntity> where T
         return new CreateResult<TEntity>(ResultCode.Failure, entity, "Failed to create data.");
     }
 
-    public async Task<DeleteResult> DeleteAsync(string project, uint id, CancellationToken cancellationToken)
+    public async Task<DeleteResult> DeleteAsync(string project, uint id, CancellationToken cancellationToken = default)
     {
         var request = new HttpRequestMessage(HttpMethod.Delete, $"api/{_typeName}/{id}");
         AddProjectToRequest(request, _connectionData);
@@ -64,7 +64,7 @@ public abstract class BaseHTTPRepository<TEntity> : IRepository<TEntity> where T
         return new DeleteResult(ResultCode.Failure, id, "Failed to delete data.");
     }
 
-    public async Task<UpdateResult<TEntity>> UpdateAsync(string project, TEntity entity, CancellationToken cancellationToken)
+    public async Task<UpdateResult<TEntity>> UpdateAsync(string project, TEntity entity, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(entity);
 
@@ -85,7 +85,7 @@ public abstract class BaseHTTPRepository<TEntity> : IRepository<TEntity> where T
         return new UpdateResult<TEntity>(ResultCode.Failure, entity, "Failed to update data.");
     }
 
-    public async Task<ValidateResult> ValidateCreateAsync(string project, TEntity entity, CancellationToken cancellationToken)
+    public async Task<ValidateResult> ValidateCreateAsync(string project, TEntity entity, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(entity);
 
@@ -106,7 +106,7 @@ public abstract class BaseHTTPRepository<TEntity> : IRepository<TEntity> where T
         return new ValidateResult(ResultCode.Failure, entity.GetId(), "Failed to validate create data.");
     }
 
-    public async Task<ValidateResult> ValidateUpdateAsync(string project, TEntity entity, CancellationToken cancellationToken)
+    public async Task<ValidateResult> ValidateUpdateAsync(string project, TEntity entity, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(entity);
 
@@ -127,7 +127,7 @@ public abstract class BaseHTTPRepository<TEntity> : IRepository<TEntity> where T
         return new ValidateResult(ResultCode.Failure, entity.GetId(), "Failed to validate update data.");
     }
 
-    public async Task<GetSingleResult<TEntity>> GetSingleAsync(string project, uint id, CancellationToken cancellationToken)
+    public async Task<GetSingleResult<TEntity>> GetSingleAsync(string project, uint id, CancellationToken cancellationToken = default)
     {
         var request = new HttpRequestMessage(HttpMethod.Get, $"api/{_typeName}/Single/{id}");
         AddProjectToRequest(request, _connectionData);
@@ -145,7 +145,7 @@ public abstract class BaseHTTPRepository<TEntity> : IRepository<TEntity> where T
         return new GetSingleResult<TEntity>(ResultCode.Failure, id, default(TEntity), "Failed to retrieve data");
     }
 
-    public async Task<GetManyResult<TEntity>> GetAllAsync(string project, CancellationToken cancellationToken)
+    public async Task<GetManyResult<TEntity>> GetAllAsync(string project, CancellationToken cancellationToken = default)
     {
         var request = new HttpRequestMessage(HttpMethod.Get, $"api/{_typeName}/All");
         AddProjectToRequest(request, _connectionData);

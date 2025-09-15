@@ -23,7 +23,7 @@ public sealed class TaskRepositorySqlite : ITaskRepository
         command.ExecuteNonQuery();
     }
 
-    public async Task<CreateResult<TaskItem>> CreateAsync(string project, TaskItem entity, CancellationToken cancellationToken)
+    public async Task<CreateResult<TaskItem>> CreateAsync(string project, TaskItem entity, CancellationToken cancellationToken = default)
     {
         var validateResult = await ValidateCreateAsync(project, entity, cancellationToken);
         if (validateResult.ResultCode == ResultCode.Failure)
@@ -41,7 +41,7 @@ public sealed class TaskRepositorySqlite : ITaskRepository
         return new CreateResult<TaskItem>(ResultCode.Success, entity);
     }
 
-    public async Task<DeleteResult> DeleteAsync(string project, uint id, CancellationToken cancellationToken)
+    public async Task<DeleteResult> DeleteAsync(string project, uint id, CancellationToken cancellationToken = default)
     {
         string connectionString = ConnectionCache.GetConnectionData<SqliteConnectionData>(project).ConnectionString;
         using var connection = new SqliteConnection(connectionString);
@@ -55,7 +55,7 @@ public sealed class TaskRepositorySqlite : ITaskRepository
         return new DeleteResult(ResultCode.Success, id);
     }
 
-    public async Task<UpdateResult<TaskItem>> UpdateAsync(string project, TaskItem entity, CancellationToken cancellationToken)
+    public async Task<UpdateResult<TaskItem>> UpdateAsync(string project, TaskItem entity, CancellationToken cancellationToken = default)
     {
         var validateResult = await ValidateUpdateAsync(project, entity, cancellationToken);
         if (validateResult.ResultCode == ResultCode.Failure)
@@ -79,7 +79,7 @@ public sealed class TaskRepositorySqlite : ITaskRepository
         return new UpdateResult<TaskItem>(ResultCode.Success, entity);
     }
 
-    public async Task<ValidateResult> ValidateCreateAsync(string project, TaskItem entity, CancellationToken cancellationToken)
+    public async Task<ValidateResult> ValidateCreateAsync(string project, TaskItem entity, CancellationToken cancellationToken = default)
     {
         string connectionString = ConnectionCache.GetConnectionData<SqliteConnectionData>(project).ConnectionString;
         using var connection = new SqliteConnection(connectionString);
@@ -96,7 +96,7 @@ public sealed class TaskRepositorySqlite : ITaskRepository
         return new ValidateResult(ResultCode.Success, entity.Id);
     }
 
-    public async Task<ValidateResult> ValidateUpdateAsync(string project, TaskItem entity, CancellationToken cancellationToken)
+    public async Task<ValidateResult> ValidateUpdateAsync(string project, TaskItem entity, CancellationToken cancellationToken = default)
     {
         string connectionString = ConnectionCache.GetConnectionData<SqliteConnectionData>(project).ConnectionString;
         using var connection = new SqliteConnection(connectionString);
@@ -124,7 +124,7 @@ public sealed class TaskRepositorySqlite : ITaskRepository
         return new ValidateResult(ResultCode.Success, entity.Id);
     }
 
-    public async Task<GetSingleResult<TaskItem>> GetSingleAsync(string project, uint id, CancellationToken cancellationToken)
+    public async Task<GetSingleResult<TaskItem>> GetSingleAsync(string project, uint id, CancellationToken cancellationToken = default)
     {
         string connectionString = ConnectionCache.GetConnectionData<SqliteConnectionData>(project).ConnectionString;
         using var connection = new SqliteConnection(connectionString);
@@ -147,7 +147,7 @@ public sealed class TaskRepositorySqlite : ITaskRepository
         return new GetSingleResult<TaskItem>(ResultCode.Failure, id, null, "Failed to get task from storage.");
     }
 
-    public async Task<GetManyResult<TaskItem>> GetAllAsync(string project, CancellationToken cancellationToken)
+    public async Task<GetManyResult<TaskItem>> GetAllAsync(string project, CancellationToken cancellationToken = default)
     {
         string connectionString = ConnectionCache.GetConnectionData<SqliteConnectionData>(project).ConnectionString;
         using var connection = new SqliteConnection(connectionString);

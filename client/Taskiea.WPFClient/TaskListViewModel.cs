@@ -1,6 +1,6 @@
-﻿using System.ComponentModel;
+﻿using CommunityToolkit.Mvvm.Input;
+using System.ComponentModel;
 using System.Windows.Data;
-using System.Windows.Input;
 using Taskiea.Core.Results;
 using Taskiea.Core.Tasks;
 
@@ -10,25 +10,11 @@ public class TaskListViewModel : INotifyPropertyChanged
 {
     public event PropertyChangedEventHandler? PropertyChanged;
 
-    private string _newTaskName = "";
-    public string NewTaskName
-    {
-        get => _newTaskName;
-        set { _newTaskName = value; OnPropertyChanged(nameof(NewTaskName)); }
-    }
-
-    private string _newTaskDescription = "";
-    public string NewTaskDescription
-    {
-        get => _newTaskDescription;
-        set { _newTaskDescription = value; OnPropertyChanged(nameof(NewTaskDescription)); }
-    }
-
     public ICollectionView TasksView { get; }
-    public ICommand AddTaskCommand { get; }
-    public ICommand DeleteTaskCommand { get; }
-    public ICommand ToggleCompletedFilterCommand { get; }
-    public ICommand CommitNewTaskCommand { get; }
+    public IAsyncRelayCommand AddTaskCommand { get; }
+    public IAsyncRelayCommand DeleteTaskCommand { get; }
+    public IRelayCommand ToggleCompletedFilterCommand { get; }
+    public IAsyncRelayCommand CreateNewTaskCommand { get; }
 
     private bool _showCompletedOnly;
     public bool ShowCompletedOnly
@@ -36,6 +22,7 @@ public class TaskListViewModel : INotifyPropertyChanged
         get => _showCompletedOnly;
         set
         {
+            // TODO: Decide if we want this check purely because of app refresh, log triggers
             if (_showCompletedOnly != value)
             {
                 _showCompletedOnly = value;
@@ -45,20 +32,30 @@ public class TaskListViewModel : INotifyPropertyChanged
         }
     }
 
-    private readonly ITaskRepository _taskRepository;
-    private CancellationTokenSource _cts;
-
-    private CancellationToken GetNewToken()
+    private string _newTaskName = "";
+    public string NewTaskName
     {
-        // Not sure if I like this. Perhaps my library should support null tokens so
-        // I only code it in the UI if it actually uses it. Here I am just making tokens
-        // to satisfy the API
-        _cts?.Cancel();
-        _cts = new CancellationTokenSource();
-        return _cts.Token;
+        get => _newTaskName;
+        set
+        {
+            _newTaskName = value;
+            OnPropertyChanged(nameof(NewTaskName));
+            CreateNewTaskCommand.NotifyCanExecuteChanged();
+        }
     }
 
-    protected void OnPropertyChanged(string name) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+    private string _newTaskDescription = "";
+    public string NewTaskDescription
+    {
+        get => _newTaskDescription;
+        set
+        {
+            _newTaskDescription = value;
+            OnPropertyChanged(nameof(NewTaskDescription));
+        }
+    }
+
+    private readonly ITaskRepository _taskRepository;
 
     public TaskListViewModel()
     {
@@ -70,18 +67,15 @@ public class TaskListViewModel : INotifyPropertyChanged
         TasksView = CollectionViewSource.GetDefaultView(AppDataCache.shared.Tasks);
         TasksView.Filter = TaskFilter;
 
-        // TODO: Change this to work with async relay commands
-        // Or just get rid of this? I am still not sure why this is needed. 
-        // Need to build more UI to learn? Because I thought my WPF UserControl
-        // would just call the functions directly? Not sure.
-        AddTaskCommand = new RelayCommand(_ => CreateAsync());
-        DeleteTaskCommand = new RelayCommand(task => DeleteAsync(task as TaskItem));
-        ToggleCompletedFilterCommand = new RelayCommand(_ =>
-        {
-            ShowCompletedOnly = !ShowCompletedOnly;
-        });
-        CommitNewTaskCommand = new RelayCommand(_ => _ = CreateAsync(), _ => !string.IsNullOrWhiteSpace(NewTaskName));
+        AddTaskCommand = new AsyncRelayCommand(CreateAsync);
+        DeleteTaskCommand = new AsyncRelayCommand<TaskItem>(DeleteAsync);
+        ToggleCompletedFilterCommand = new RelayCommand(() => { ShowCompletedOnly = !ShowCompletedOnly; });
+        CreateNewTaskCommand = new AsyncRelayCommand(CreateAsync, NewTaskNameValid);
     }
+
+    protected void OnPropertyChanged(string name) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+
+    private bool NewTaskNameValid() => !string.IsNullOrWhiteSpace(NewTaskName);
 
     private bool TaskFilter(object obj)
     {
@@ -92,7 +86,7 @@ public class TaskListViewModel : INotifyPropertyChanged
 
     public async Task LoadAsync()
     {
-        await AppDataCache.shared.Refresh(GetNewToken());
+        await AppDataCache.shared.Refresh();
     }
 
     private async Task CreateAsync()
@@ -104,10 +98,10 @@ public class TaskListViewModel : INotifyPropertyChanged
             Status = Status.Open
         };
 
-        var validateResult = await _taskRepository.ValidateCreateAsync(AppDataCache.shared.Project.Name, newTask, GetNewToken());
-        if (validateResult.ResultCode == Core.Results.ResultCode.Success)
+        var validateResult = await _taskRepository.ValidateCreateAsync(AppDataCache.shared.Project.Name, newTask);
+        if (validateResult.ResultCode == ResultCode.Success)
         {
-            var createResult = await _taskRepository.CreateAsync(AppDataCache.shared.Project.Name, newTask, GetNewToken());
+            var createResult = await _taskRepository.CreateAsync(AppDataCache.shared.Project.Name, newTask);
             if (createResult.ResultCode == ResultCode.Success)
             {
                 AppDataCache.shared.Tasks.Add(newTask);
@@ -116,21 +110,19 @@ public class TaskListViewModel : INotifyPropertyChanged
             }
         }
 
+        // TODO: Remove
         for (int i = 0; i < 100; i++)
         {
-            CancellationTokenSource cts = new CancellationTokenSource();
             TaskItem item = new TaskItem() { Name = i.ToString(), Description = $"Test description {i}", Status = Status.Open, Assignee = 0 };
-            var result = _taskRepository.CreateAsync(AppDataCache.shared.Project.Name, item, cts.Token);
-            cts.Dispose();
+            var result = _taskRepository.CreateAsync(AppDataCache.shared.Project.Name, item);
         }
     }
 
     private async Task DeleteAsync(TaskItem? task)
     {
-        if (task is null)
-            return;
+        ArgumentNullException.ThrowIfNull(task);
 
-        var deleteResult = await _taskRepository.DeleteAsync(AppDataCache.shared.Project.Name, task.Id, GetNewToken());
+        var deleteResult = await _taskRepository.DeleteAsync(AppDataCache.shared.Project.Name, task.Id);
         if (deleteResult.ResultCode == ResultCode.Success)
             AppDataCache.shared.Tasks.Remove(task);
     }

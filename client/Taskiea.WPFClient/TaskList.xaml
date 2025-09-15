@@ -15,10 +15,9 @@
         <StackPanel Orientation="Horizontal" DockPanel.Dock="Top" Margin="0,0,0,5">
             <TextBox Width="200" Text="{Binding NewTaskName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
             <TextBox Width="300" Text="{Binding NewTaskDescription, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
-            <Button Content="Add" Command="{Binding CommitNewTaskCommand}" Margin="5,0,0,0"/>
+            <Button Content="Add" Command="{Binding CreateNewTaskCommand}" Margin="5,0,0,0"/>
         </StackPanel>
-        <!--<Button Content="Add Task" Command="{Binding AddTaskCommand}" Margin="5"/>-->
-        <!--<Button Content="Toggle Completed Only" Command="{Binding ToggleCompletedFilterCommand}" Margin="5"/>-->
+        
         <ListView ItemsSource="{Binding TasksView}">
             <ListView.View>
                 <GridView>
