@@ -4,7 +4,6 @@
 
 ## Low Priority
 - add paging & filter support to repositories (not needed for WPF)
-- rename to Taskpiea
 - review Sqlite repositories to see if they can be refactored
 	- connection stuff can be
 - error logging for WPF app
