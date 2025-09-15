@@ -2,13 +2,22 @@
 
 namespace Taskiea.Core.Connections;
 
-public class ConnectionCache : IConnectionCache, IDisposable
+/// <summary>
+/// A class to hold connections that are used by repositories.
+/// Register a connection to keep it around as long as needed.
+/// If a connection is no longer needed, unregister it.
+/// Connections are unique based on proejct name.
+/// </summary>
+public class ConnectionCache : IConnectionCache
 {
     private readonly ConcurrentDictionary<string, BaseConnectionData> _connectionCache = new();
 
     public void Register<TConnection>(TConnection connection) where TConnection : BaseConnectionData
     {
         ArgumentNullException.ThrowIfNull(connection);
+        if (_connectionCache.ContainsKey(connection.ProjectName))
+            throw new Exception("Connection already exists for that project name.");
+
         _connectionCache[connection.ProjectName] = connection;
     }
 
@@ -21,7 +30,7 @@ public class ConnectionCache : IConnectionCache, IDisposable
     public void UnregisterAll()
     {
         foreach (var connectionData in _connectionCache.Values)
-            connectionData?.Dispose();
+            Unregister(connectionData.ProjectName);
     }
 
     public T? GetConnectionData<T>(string projectName) where T : BaseConnectionData
@@ -29,19 +38,7 @@ public class ConnectionCache : IConnectionCache, IDisposable
         if (_connectionCache.TryGetValue(projectName, out var cachedConnectionData))
             return (T)cachedConnectionData;
 
-        // TODO: Maybe put this in a register/unregister system?
-        if (typeof(T) == typeof(SqliteConnectionData))
-        {
-            _connectionCache[projectName] = new SqliteConnectionData(projectName, null);
-            return (T)_connectionCache[projectName];
-        }
-        else if (typeof(T) == typeof(HTTPConnectionData))
-        {
-            // TODO: how do we handle requesting an HTTP connection that did not exist
-            return default;
-        }
-
-        throw new NotSupportedException();
+        return null;
     }
 
     public void Dispose()

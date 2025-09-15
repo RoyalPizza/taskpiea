@@ -25,7 +25,7 @@ public sealed class AppDataCache
         // 1) create the connection data based on whether the project is standalone or client/server
         // 2) register the connection data with the connection cache
         // 3) create a repository manager to initialize repositories using that connection data
-        // TODO: Currently only HTTP requires recreation
+        // NOTE: It is up to the dev to unregister connections they no longer need so they are disposed and such.
         Project = new Project() { Name = "Test Project" };
         SqliteConnectionData connectionData = new SqliteConnectionData(Project.Name);
         ConnectionCache.Register(connectionData);
