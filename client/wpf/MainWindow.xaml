@@ -6,7 +6,11 @@
         xmlns:local="clr-namespace:Taskpiea.WPFClient"
         mc:Ignorable="d"
         Title="MainWindow" Height="768" Width="1024"
-        WindowStyle="None" AllowsTransparency="True">
+        WindowStyle="None" AllowsTransparency="True"
+        Loaded="Window_Loaded">
+    <Window.DataContext>
+        <local:MainWindowViewModel/>
+    </Window.DataContext>
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"  />
@@ -19,13 +23,17 @@
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
-                <Menu VerticalAlignment="Center" Grid.Column="0">
+                <!-- Red square as placeholder for logo -->
+                <Rectangle Grid.Column="0" Width="20" Height="20" Fill="Red" VerticalAlignment="Center" Margin="5,0,5,0"/>
+
+                <Menu Grid.Column="1" VerticalAlignment="Center">
                     <MenuItem Header="File">
-                        <MenuItem Name="CreateProjectMenuItem" Header="Create Project" Click="CreateProjectMenuItem_Click" />
+                        <MenuItem Name="NewProjectMenuItem" Header="New Project" Click="NewProjectMenuItem_Click" />
                         <MenuItem Name="OpenProjectMenuItem" Header="Open Project" Click="OpenProjectMenuItem_Click" />
                         <MenuItem Name="CloseProjectMenuItem" Header="Close Project" Click="CloseProjectMenuItem_Click" />
                         <Separator />
@@ -33,9 +41,10 @@
                     <MenuItem Header="Edit" />
                 </Menu>
 
-                <Label Grid.Column="1" Content="Taskpiea" HorizontalAlignment="Center" VerticalAlignment="Center" FontWeight="Bold" FontSize="14"/>
+                <!--<Label Grid.Column="2" Content="Taskpiea" HorizontalAlignment="Center" VerticalAlignment="Center" FontWeight="Bold" FontSize="14"/>-->
+                <Label Grid.Column="2" Content="{Binding CurrentProjectName}" HorizontalAlignment="Center" VerticalAlignment="Center" FontWeight="Bold" FontSize="14"/>
 
-                <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right">
+                <StackPanel Grid.Column="3" Orientation="Horizontal" HorizontalAlignment="Right">
                     <Button Name="MinimizeButton" Content="🗕" Click="MinimizeButton_Click" />
                     <Button Name="MaximizeButton" Content="🗖" Click="MaximizeButton_Click" />
                     <Button Name="CloseButton" Content="🗙" Click="CloseButton_Click" />
@@ -43,8 +52,8 @@
             </Grid>
         </Border>
 
-        <!--<ContentControl Grid.Row="1" />-->
-        <local:TaskList Grid.Row="1" />
+        <ContentControl Name="MainContentControl" Grid.Row="1" />
+        <!--<local:TaskList Grid.Row="1" />-->
 
         <StatusBar Grid.Row="2">
             <!-- TODO DECIDE IF I WANT THIS -->

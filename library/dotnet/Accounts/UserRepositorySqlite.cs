@@ -6,10 +6,7 @@ namespace Taskpiea.Core.Accounts;
 
 public sealed class UserRepositorySqlite : BaseRepository, IUserRepository
 {
-    public UserRepositorySqlite(IConnectionCache connectionCache) : base(connectionCache)
-    {
-
-    }
+    public UserRepositorySqlite(IConnectionCache connectionCache) : base(connectionCache) { }
 
     public override void Initialize(string project)
     {

@@ -1,6 +1,6 @@
 ﻿namespace Taskpiea.Core.Connections;
 
-public interface IConnectionCache : IDisposable
+public interface IConnectionCache
 {
     void Register<TConnection>(TConnection connection) where TConnection : BaseConnectionData;
     void Unregister(string projectName);

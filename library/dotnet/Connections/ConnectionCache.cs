@@ -40,9 +40,4 @@ public class ConnectionCache : IConnectionCache
 
         return null;
     }
-
-    public void Dispose()
-    {
-        UnregisterAll();
-    }
 }

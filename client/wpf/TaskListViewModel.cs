@@ -6,7 +6,7 @@ using Taskpiea.Core.Tasks;
 
 namespace Taskpiea.WPFClient;
 
-public class TaskListViewModel : INotifyPropertyChanged
+internal class TaskListViewModel : INotifyPropertyChanged
 {
     public event PropertyChangedEventHandler? PropertyChanged;
 

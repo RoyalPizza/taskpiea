@@ -2,22 +2,24 @@
 
 public class SqliteConnectionData : BaseConnectionData
 {
-    public string? ProjectPath { get; set; }
+    public string? ProjectDirectory { get; set; }
     public string ConnectionString { get; set; }
+
+    public const string PROJECT_EXTENSION = ".taskp";
 
     public SqliteConnectionData(string projectName, string? projectPath = null) : base(projectName)
     {
-        ProjectPath = projectPath;
+        ProjectDirectory = projectPath;
+        string filePath = GetFilePath();
+        ConnectionString = $"Data Source={filePath}";
+    }
 
-        if (string.IsNullOrEmpty(projectPath))
-        {
-            ConnectionString = $"Data Source={projectName}.taskp";
-        }
+    public string GetFilePath()
+    {
+        if (string.IsNullOrEmpty(ProjectDirectory))
+            return $"{ProjectName}{PROJECT_EXTENSION}";
         else
-        {
-            // TODO: validate path (e.g., check if directory exists, sanitize input)
-            ConnectionString = $"Data Source={projectPath}/{projectName}.taskp";
-        }
+            return $"{ProjectDirectory}/{ProjectName}{PROJECT_EXTENSION}";
     }
 
     public override void Dispose()
