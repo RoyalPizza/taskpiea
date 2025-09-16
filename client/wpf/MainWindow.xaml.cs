@@ -43,6 +43,9 @@ namespace Taskpiea.WPFClient
 
         private void OpenProjectMenuItem_Click(object sender, RoutedEventArgs e)
         {
+            if (AppDataCache.shared.Project != null)
+                AppDataCache.shared.CloseProject();
+
             // TODO: Right now this is hardcoded to be local projects only, but we need to support either local or client/server
 
             string extensionName = AppDataCache.shared.ProjectProber.GetProjectFileExtension();
@@ -66,6 +69,9 @@ namespace Taskpiea.WPFClient
 
         private void CloseProjectMenuItem_Click(object sender, RoutedEventArgs e)
         {
+            if (AppDataCache.shared.Project == null)
+                return;
+
             AppDataCache.shared.CloseProject();
             MainContentControl.Content = new HomeScreenControl();
         }
