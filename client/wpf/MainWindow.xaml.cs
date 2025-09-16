@@ -1,7 +1,6 @@
 ﻿using Microsoft.Win32;
 using System.IO;
 using System.Windows;
-using System.Windows.Input;
 using Taskpiea.Core.Connections;
 
 namespace Taskpiea.WPFClient
@@ -20,16 +19,6 @@ namespace Taskpiea.WPFClient
         {
             MainContentControl.Content = new HomeScreenControl();
         }
-
-        // These functions are so we can support our own "window handle"
-        private void Border_MouseDown(object sender, MouseButtonEventArgs e)
-        {
-            if (e.LeftButton == MouseButtonState.Pressed)
-                DragMove();
-        }
-        private void MinimizeButton_Click(object sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;
-        private void MaximizeButton_Click(object sender, RoutedEventArgs e) => WindowState = WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
-        private void CloseButton_Click(object sender, RoutedEventArgs e) => Close();
 
         private void NewProjectMenuItem_Click(object sender, RoutedEventArgs e)
         {

@@ -11,7 +11,7 @@ public sealed class ProjectRepositorySqlite : BaseRepository, IProjectRepository
 {
     public ProjectRepositorySqlite(IConnectionCache connectionCache) : base(connectionCache)
     {
-        
+
     }
 
     public override void Initialize(string project)

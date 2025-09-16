@@ -7,11 +7,10 @@
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800">
     <Grid>
-        <Label Content="HOME_SCREEN" FontSize="8" FontStyle="Normal" Foreground="Gray"/>
-        
         <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-            <Label Content="TASKPIEA" FontSize="22" FontWeight="Bold" Margin="10"/>
-            <Button Name="OpenProjectButton" Content="Open Project" Click="OpenProjectButton_Click"/>
+            <Label Content="Home" />
+            <!--<Label Content="TASKPIEA" FontSize="22" FontWeight="Bold" Margin="10" VerticalAlignment="Center" HorizontalAlignment="Center"/>-->
+            <!--<Button Name="OpenProjectButton" Content="Open Project" Click="OpenProjectButton_Click" VerticalAlignment="Center" HorizontalAlignment="Center"/>-->
         </StackPanel>
     </Grid>
 </UserControl>

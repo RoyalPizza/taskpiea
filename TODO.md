@@ -5,7 +5,7 @@
 ## Low Priority
 - add paging & filter support to repositories (not needed for WPF)
 - review Sqlite repositories to see if they can be refactored
-	- connection stuff can be
+	- connection stuff can be refactored
 - error logging for WPF app
 
 ## Considerations
