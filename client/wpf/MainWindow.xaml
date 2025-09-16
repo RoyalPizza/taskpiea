@@ -6,7 +6,7 @@
         xmlns:local="clr-namespace:Taskpiea.WPFClient"
         mc:Ignorable="d"
         Title="MainWindow" Height="768" Width="1024"
-        WindowStyle="None" AllowsTransparency="True"
+        WindowStyle="None"
         Loaded="Window_Loaded">
     <Window.DataContext>
         <local:MainWindowViewModel/>
@@ -19,7 +19,7 @@
         </Grid.RowDefinitions>
 
         <!-- We use border to create our "window handle" so we can style menu like VS -->
-        <Border Height="30" MouseDown="Border_MouseDown" Background="Transparent">
+        <Border Height="30" MouseDown="Border_MouseDown">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
