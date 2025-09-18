@@ -1,5 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.Input;
 using System.ComponentModel;
+using System.Diagnostics;
+using System.Threading.Tasks;
 using System.Windows.Data;
 using Taskpiea.Core.Results;
 using Taskpiea.Core.Tasks;
@@ -9,12 +11,12 @@ namespace Taskpiea.WPFClient;
 internal class TaskListViewModel : INotifyPropertyChanged
 {
     public event PropertyChangedEventHandler? PropertyChanged;
-
     public ICollectionView TasksView { get; }
-    public IAsyncRelayCommand AddTaskCommand { get; }
+    public IAsyncRelayCommand<TaskItem, CreateResult<TaskItem>> CreateNewTaskCommand { get; }
+    public IAsyncRelayCommand<TaskItem, UpdateResult<TaskItem>> UpdateTaskCommand { get; }
     public IAsyncRelayCommand DeleteTaskCommand { get; }
     public IRelayCommand ToggleCompletedFilterCommand { get; }
-    public IAsyncRelayCommand CreateNewTaskCommand { get; }
+
 
     private bool _showCompletedOnly;
     public bool ShowCompletedOnly
@@ -67,10 +69,11 @@ internal class TaskListViewModel : INotifyPropertyChanged
         TasksView = CollectionViewSource.GetDefaultView(AppDataCache.shared.Tasks);
         TasksView.Filter = TaskFilter;
 
-        AddTaskCommand = new AsyncRelayCommand(CreateAsync);
+        //CreateNewTaskCommand = new AsyncRelayCommand(CreateAsync, NewTaskNameValid);
+        CreateNewTaskCommand = new AsyncRelayCommand<TaskItem, CreateResult<TaskItem>?>(CreateAsync);
         DeleteTaskCommand = new AsyncRelayCommand<TaskItem>(DeleteAsync);
+        UpdateTaskCommand = new AsyncRelayCommand<TaskItem>(UpdateAsync);
         ToggleCompletedFilterCommand = new RelayCommand(() => { ShowCompletedOnly = !ShowCompletedOnly; });
-        CreateNewTaskCommand = new AsyncRelayCommand(CreateAsync, NewTaskNameValid);
     }
 
     protected void OnPropertyChanged(string name) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
@@ -84,12 +87,13 @@ internal class TaskListViewModel : INotifyPropertyChanged
         return !ShowCompletedOnly || task.Status == Status.Done;
     }
 
-    public async Task LoadAsync()
+    private async Task LoadAsync()
     {
         await AppDataCache.shared.Refresh();
     }
 
-    private async Task CreateAsync()
+    [Obsolete]
+    private async Task CreateAsyncOld()
     {
         var newTask = new TaskItem
         {
@@ -113,9 +117,50 @@ internal class TaskListViewModel : INotifyPropertyChanged
         // TODO: Remove
         for (int i = 0; i < 100; i++)
         {
-            TaskItem item = new TaskItem() { Name = i.ToString(), Description = $"Test description {i}", Status = Status.Open, Assignee = 0 };
+            continue;
+            TaskItem item = new TaskItem() { Name = i.ToString(), Description = $"Test description {i}", Status = Status.Open, Assignee = null };
             var result = _taskRepository.CreateAsync(AppDataCache.shared.Project.Name, item);
         }
+    }
+
+    private async Task<CreateResult<TaskItem>?> CreateAsync(TaskItem? taskItem)
+    {
+        ArgumentNullException.ThrowIfNull(taskItem);
+
+        Debug.WriteLine("TaskListViewModel::CreateAsync");
+
+        var validateResult = await _taskRepository.ValidateCreateAsync(AppDataCache.shared.Project.Name, taskItem);
+        if (validateResult.ResultCode == ResultCode.Success)
+        {
+            var createResult = await _taskRepository.CreateAsync(AppDataCache.shared.Project.Name, taskItem);
+            if (createResult.ResultCode == ResultCode.Success)
+            {
+                NewTaskName = "";
+                NewTaskDescription = "";
+                return createResult;
+            }
+        }
+
+        return new CreateResult<TaskItem>(ResultCode.Failure, taskItem, "Failed!");
+    }
+
+    private async Task<UpdateResult<TaskItem>> UpdateAsync(TaskItem? taskItem)
+    {
+        ArgumentNullException.ThrowIfNull(taskItem);
+
+        var validateResult = await _taskRepository.ValidateUpdateAsync(AppDataCache.shared.Project.Name, taskItem);
+        if (validateResult.ResultCode == ResultCode.Success)
+        {
+            var updateResult = await _taskRepository.UpdateAsync(AppDataCache.shared.Project.Name, taskItem);
+            if (updateResult.ResultCode == ResultCode.Success)
+            {
+                return updateResult;
+            }
+        }
+
+        return new UpdateResult<TaskItem>(ResultCode.Failure, taskItem, "Failed!");
+        
+        Debug.WriteLine("TaskListViewModel::UpdateAsync");
     }
 
     private async Task DeleteAsync(TaskItem? task)
@@ -125,5 +170,7 @@ internal class TaskListViewModel : INotifyPropertyChanged
         var deleteResult = await _taskRepository.DeleteAsync(AppDataCache.shared.Project.Name, task.Id);
         if (deleteResult.ResultCode == ResultCode.Success)
             AppDataCache.shared.Tasks.Remove(task);
+
+        Debug.WriteLine("TaskListViewModel::DeleteAsync");
     }
 }

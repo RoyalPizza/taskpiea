@@ -13,7 +13,11 @@
 - review unique create results and consider if generic is better
 - 
 
-
+## UI Changes
+- window buttons no background, larger, no margin. Use icon instead of text if needed. Color background on hover only. No pressed color. #535346
+- background color to be dark. #2F2D28
+- UI font Segoe UI
+- task font? JetBrains Mono (TBD)
 
 
 

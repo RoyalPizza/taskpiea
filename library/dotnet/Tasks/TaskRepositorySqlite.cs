@@ -26,7 +26,9 @@ public sealed class TaskRepositorySqlite : BaseRepository, ITaskRepository
                 Id INTEGER PRIMARY KEY AUTOINCREMENT,
                 Name TEXT NOT NULL,
                 Description TEXT NOT NULL,
-                Status INTEGER NOT NULL
+                Status INTEGER NOT NULL,
+                AssigneeId INTEGER NULL,
+                FOREIGN KEY (AssigneeId) REFERENCES Users(Id)
             );";
         command.ExecuteNonQuery();
     }

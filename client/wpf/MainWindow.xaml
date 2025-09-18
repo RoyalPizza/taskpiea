@@ -24,7 +24,10 @@
                 <MenuItem Name="CloseProjectMenuItem" Header="Close Project" Click="CloseProjectMenuItem_Click" />
                 <Separator />
             </MenuItem>
-            <MenuItem Header="Edit" />
+            <MenuItem Header="Project">
+                <MenuItem Name="ProjectEditTasksMenuItem" Header="Edit Tasks" Click="ProjectEditTasksMenuItem_Click" />
+                <MenuItem Name="ProjectEditUsersMenuItem" Header="Edit Users" Click="ProjectEditUsersMenuItem_Click" />
+            </MenuItem>
         </Menu>
 
         <Label Grid.Row="0" Content="{Binding CurrentProjectName}" HorizontalAlignment="Center" VerticalAlignment="Center" FontWeight="Bold" FontSize="14"/>

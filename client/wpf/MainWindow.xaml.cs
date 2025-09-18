@@ -64,5 +64,21 @@ namespace Taskpiea.WPFClient
             AppDataCache.shared.CloseProject();
             MainContentControl.Content = new HomeScreenControl();
         }
+
+        private void ProjectEditTasksMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            if (AppDataCache.shared.Project == null)
+                return;
+
+            MainContentControl.Content = new TaskListControl();
+        }
+
+        private void ProjectEditUsersMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            if (AppDataCache.shared.Project == null)
+                return;
+
+            MainContentControl.Content = new UserListControl();
+        }
     }
 }

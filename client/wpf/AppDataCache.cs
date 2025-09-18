@@ -1,8 +1,10 @@
 ﻿using System.Collections.ObjectModel;
 using System.ComponentModel;
 using Taskpiea.Core;
+using Taskpiea.Core.Accounts;
 using Taskpiea.Core.Connections;
 using Taskpiea.Core.Projects;
+using Taskpiea.Core.Results;
 using Taskpiea.Core.Tasks;
 
 namespace Taskpiea.WPFClient;
@@ -28,8 +30,10 @@ public sealed class AppDataCache : INotifyPropertyChanged
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
-    public ObservableCollection<TaskItem> Tasks { get; } = new ObservableCollection<TaskItem>();
+    public ObservableCollection<TaskItem> Tasks { get; } = new();
+    public ObservableCollection<User> Users { get; } = new();
     private ITaskRepository? _taskRepository;
+    private IUserRepository? _userRepository;
 
     private AppDataCache()
     {
@@ -46,6 +50,7 @@ public sealed class AppDataCache : INotifyPropertyChanged
         RepositoryManager = new RepositoryManager(ConnectionCache, connectionData);
 
         _taskRepository = RepositoryManager.Get<ITaskRepository>();
+        _userRepository = RepositoryManager.Get<IUserRepository>();
     }
 
     public void CloseProject()
@@ -59,17 +64,23 @@ public sealed class AppDataCache : INotifyPropertyChanged
 
     public async Task Refresh(CancellationToken cancellationToken = default)
     {
-        if (_taskRepository is null || Project is null)
+        if (Project is null || _taskRepository is null || _userRepository is null)
             return;
 
-        await _taskRepository.GetAllAsync(Project.Name, cancellationToken);
-
-        var result = await _taskRepository.GetAllAsync(Project.Name, cancellationToken);
-        if (result.ResultCode == Core.Results.ResultCode.Success)
+        var tasksRequest = await _taskRepository.GetAllAsync(Project.Name, cancellationToken);
+        if (tasksRequest.ResultCode == ResultCode.Success)
         {
             Tasks.Clear();
-            foreach (var task in result.DataObjects)
+            foreach (var task in tasksRequest.Entities)
                 Tasks.Add(task);
+        }
+
+        var usersRequest = await _userRepository.GetAllAsync(Project.Name, cancellationToken);
+        if (usersRequest.ResultCode == ResultCode.Success)
+        {
+            Users.Clear();
+            foreach (var user in usersRequest.Entities)
+                Users.Add(user);
         }
     }
 

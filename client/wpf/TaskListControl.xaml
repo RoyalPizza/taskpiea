@@ -11,31 +11,17 @@
     </UserControl.DataContext>
     <DockPanel>
         <StackPanel Orientation="Horizontal" DockPanel.Dock="Top" Margin="0,0,0,5">
-            <TextBox Width="200" Text="{Binding NewTaskName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
-            <TextBox Width="300" Text="{Binding NewTaskDescription, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
-            <Button Content="Add" Command="{Binding CreateNewTaskCommand}" Margin="5,0,0,0"/>
+            <TextBox Width="200" Text="{Binding NewTaskName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Margin="5"/>
+            <TextBox Width="300" Text="{Binding NewTaskDescription, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Margin="5"/>
+            <!--<Button Content="Add" Command="{Binding CreateNewTaskCommand}" Margin="5"/>-->
         </StackPanel>
 
-        <DataGrid ItemsSource="{Binding TasksView}" AutoGenerateColumns="False" 
-                  Background="Transparent" Foreground="White" BorderBrush="Transparent">
+        <DataGrid ItemsSource="{Binding TasksView}" AutoGenerateColumns="False" AddingNewItem="DataGrid_AddingNewItem"  RowEditEnding="DataGrid_RowEditEnding"  CellEditEnding="DataGrid_CellEditEnding" >
             <DataGrid.Columns>
-                <DataGridTextColumn Header="Name" Binding="{Binding Name}" Width="200"/>
-                <DataGridTextColumn Header="Description" Binding="{Binding Description}" Width="300"/>
-                <DataGridTextColumn Header="Assignee" Binding="{Binding Assignee}" Width="100"/>
-                <DataGridTemplateColumn Header="Status" Width="100">
-                    <DataGridTemplateColumn.CellTemplate>
-                        <DataTemplate>
-                            <Border Background="Green" Width="20" Height="20"/>
-                        </DataTemplate>
-                    </DataGridTemplateColumn.CellTemplate>
-                </DataGridTemplateColumn>
-                <DataGridTemplateColumn Header="Actions" Width="80">
-                    <DataGridTemplateColumn.CellTemplate>
-                        <DataTemplate>
-                            <Button Content="Delete" Command="{Binding DataContext.DeleteTaskCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"/>
-                        </DataTemplate>
-                    </DataGridTemplateColumn.CellTemplate>
-                </DataGridTemplateColumn>
+                <DataGridTextColumn Header="Name" Binding="{Binding Name, UpdateSourceTrigger=PropertyChanged}" Width="200"/>
+                <DataGridTextColumn Header="Description" Binding="{Binding Description, UpdateSourceTrigger=PropertyChanged}" Width="300"/>
+                <!--<DataGridTextColumn Header="Assignee" Binding="{Binding Assignee}" Width="100"/>-->
+                <!--<DataGridComboBoxColumn Header="Status" ItemsSource="{Binding Source={StaticResource StatusEnum}}" SelectedValueBinding="{Binding Status}" Width="100"/>-->
             </DataGrid.Columns>
         </DataGrid>
     </DockPanel>
