@@ -3,11 +3,11 @@
 namespace Taskpiea.WPFClient
 {
     /// <summary>
-    /// Interaction logic for TaskList.xaml
+    /// Interaction logic for UserListControl.xaml
     /// </summary>
-    public partial class TaskList : UserControl
+    public partial class UserListControl : UserControl
     {
-        public TaskList()
+        public UserListControl()
         {
             InitializeComponent();
         }

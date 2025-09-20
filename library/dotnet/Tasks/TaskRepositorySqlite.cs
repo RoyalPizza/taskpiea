@@ -26,20 +26,22 @@ public sealed class TaskRepositorySqlite : BaseRepository, ITaskRepository
                 Id INTEGER PRIMARY KEY AUTOINCREMENT,
                 Name TEXT NOT NULL,
                 Description TEXT NOT NULL,
-                Status INTEGER NOT NULL
+                Status INTEGER NOT NULL,
+                AssigneeId INTEGER NULL,
+                FOREIGN KEY (AssigneeId) REFERENCES Users(Id)
             );";
         command.ExecuteNonQuery();
     }
 
-    public async Task<CreateResult<TaskItem>> CreateAsync(string project, TaskItem entity, CancellationToken cancellationToken = default)
+    public async Task<CRUDResult<TaskItem>> CreateAsync(string project, TaskItem entity, CancellationToken cancellationToken = default)
     {
         var connectionData = _connectionCache.GetConnectionData<SqliteConnectionData>(project);
         if (connectionData == null)
-            return new CreateResult<TaskItem>(ResultCode.Failure, entity, "Failed to retrieve connection data.");
+            return new CRUDResult<TaskItem>(ResultCode.Failure, entity, "Failed to retrieve connection data.");
 
         var validateResult = await ValidateCreateAsync(project, entity, cancellationToken);
         if (validateResult.ResultCode == ResultCode.Failure)
-            return new CreateResult<TaskItem>(ResultCode.Failure, entity, "Validation failed.");
+            return new CRUDResult<TaskItem>(ResultCode.Failure, entity, "Validation failed.");
 
         string connectionString = connectionData.ConnectionString;
         using var connection = new SqliteConnection(connectionString);
@@ -50,14 +52,14 @@ public sealed class TaskRepositorySqlite : BaseRepository, ITaskRepository
         command.Parameters.AddWithValue("$description", entity.Description);
         command.Parameters.AddWithValue("$status", entity.Status);
         entity.Id = Convert.ToUInt32(await command.ExecuteScalarAsync(cancellationToken));
-        return new CreateResult<TaskItem>(ResultCode.Success, entity);
+        return new CRUDResult<TaskItem>(ResultCode.Success, entity);
     }
 
-    public async Task<DeleteResult> DeleteAsync(string project, uint id, CancellationToken cancellationToken = default)
+    public async Task<CRUDResult<TaskItem>> DeleteAsync(string project, uint id, CancellationToken cancellationToken = default)
     {
         var connectionData = _connectionCache.GetConnectionData<SqliteConnectionData>(project);
         if (connectionData == null)
-            return new DeleteResult(ResultCode.Failure, id, "Failed to retrieve connection data.");
+            return new CRUDResult<TaskItem>(ResultCode.Failure, id, "Failed to retrieve connection data.");
 
         string connectionString = connectionData.ConnectionString;
         using var connection = new SqliteConnection(connectionString);
@@ -67,19 +69,19 @@ public sealed class TaskRepositorySqlite : BaseRepository, ITaskRepository
         command.Parameters.AddWithValue("$id", id);
         var rowsAffected = await command.ExecuteNonQueryAsync();
         if (rowsAffected == 0)
-            return new DeleteResult(ResultCode.Failure, id, "Failed to delete record.");
-        return new DeleteResult(ResultCode.Success, id);
+            return new CRUDResult<TaskItem>(ResultCode.Failure, id, "Failed to delete record.");
+        return new CRUDResult<TaskItem>(ResultCode.Success, id);
     }
 
-    public async Task<UpdateResult<TaskItem>> UpdateAsync(string project, TaskItem entity, CancellationToken cancellationToken = default)
+    public async Task<CRUDResult<TaskItem>> UpdateAsync(string project, TaskItem entity, CancellationToken cancellationToken = default)
     {
         var connectionData = _connectionCache.GetConnectionData<SqliteConnectionData>(project);
         if (connectionData == null)
-            return new UpdateResult<TaskItem>(ResultCode.Failure, entity, "Failed to retrieve connection data.");
+            return new CRUDResult<TaskItem>(ResultCode.Failure, entity, "Failed to retrieve connection data.");
 
         var validateResult = await ValidateUpdateAsync(project, entity, cancellationToken);
         if (validateResult.ResultCode == ResultCode.Failure)
-            return new UpdateResult<TaskItem>(ResultCode.Failure, entity, "Validation failed.");
+            return new CRUDResult<TaskItem>(ResultCode.Failure, entity, "Validation failed.");
 
         string connectionString = connectionData.ConnectionString;
         using var connection = new SqliteConnection(connectionString);
@@ -94,9 +96,9 @@ public sealed class TaskRepositorySqlite : BaseRepository, ITaskRepository
         var rowsAffected = await cmd.ExecuteNonQueryAsync();
 
         if (rowsAffected == 0)
-            return new UpdateResult<TaskItem>(ResultCode.Failure, entity, "Task not found.");
+            return new CRUDResult<TaskItem>(ResultCode.Failure, entity, "Task not found.");
 
-        return new UpdateResult<TaskItem>(ResultCode.Success, entity);
+        return new CRUDResult<TaskItem>(ResultCode.Success, entity);
     }
 
     public async Task<ValidateResult> ValidateCreateAsync(string project, TaskItem entity, CancellationToken cancellationToken = default)

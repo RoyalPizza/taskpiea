@@ -3,7 +3,7 @@
 public class GetManyResult<T> where T : IEntity
 {
     public ResultCode ResultCode { get; init; }
-    public List<T> DataObjects { get; set; } = new List<T>();
+    public List<T> Entities { get; set; } = new List<T>();
     public string ErrorMessage { get; init; } = "";
 
     public GetManyResult() { }
@@ -12,10 +12,10 @@ public class GetManyResult<T> where T : IEntity
         ResultCode = resultCode;
         ErrorMessage = errorMessage;
     }
-    public GetManyResult(ResultCode resultCode, List<T> dataObjects, string errorMessage = "")
+    public GetManyResult(ResultCode resultCode, List<T> entities, string errorMessage = "")
     {
         ResultCode = resultCode;
         ErrorMessage = errorMessage;
-        DataObjects.AddRange(dataObjects);
+        Entities.AddRange(entities);
     }
 }

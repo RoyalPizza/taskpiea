@@ -1,5 +1,6 @@
 ﻿namespace Taskpiea.Core.Projects;
 
-public interface IProjectRepository<T> : IRepository<Project>
+public interface IProjectRepository : IRepository<Project>
 {
+
 }

@@ -3,6 +3,7 @@
 public class Project : IEntity
 {
     public string Name { get; init; } = "";
+    public DateTimeOffset CreatedOn { get; init; } = DateTimeOffset.UtcNow;
 
     public uint GetId()
     {

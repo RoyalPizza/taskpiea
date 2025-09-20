@@ -6,9 +6,9 @@ namespace Taskpiea.WPFClient
     /// <summary>
     /// Interaction logic for HomeScreen.xaml
     /// </summary>
-    public partial class HomeScreen : UserControl
+    public partial class HomeScreenControl : UserControl
     {
-        public HomeScreen()
+        public HomeScreenControl()
         {
             InitializeComponent();
         }
