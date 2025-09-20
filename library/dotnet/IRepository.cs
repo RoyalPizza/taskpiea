@@ -10,9 +10,9 @@ public interface IRepository
 public interface IRepository<TEntity> : IRepository where TEntity : IEntity
 {
     // standard CRUD ops
-    Task<CreateResult<TEntity>> CreateAsync(string project, TEntity entity, CancellationToken cancellationToken = default);
-    Task<DeleteResult> DeleteAsync(string project, uint id, CancellationToken cancellationToken = default);
-    Task<UpdateResult<TEntity>> UpdateAsync(string project, TEntity entity, CancellationToken cancellationToken = default);
+    Task<CRUDResult<TEntity>> CreateAsync(string project, TEntity entity, CancellationToken cancellationToken = default);
+    Task<CRUDResult<TEntity>> DeleteAsync(string project, uint id, CancellationToken cancellationToken = default);
+    Task<CRUDResult<TEntity>> UpdateAsync(string project, TEntity entity, CancellationToken cancellationToken = default);
 
     // validation is seperate so the client can call it without doing the full operation
     Task<ValidateResult> ValidateCreateAsync(string project, TEntity entity, CancellationToken cancellationToken = default);

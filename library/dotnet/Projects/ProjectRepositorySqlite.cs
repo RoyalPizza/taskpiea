@@ -33,7 +33,7 @@ public sealed class ProjectRepositorySqlite : BaseRepository, IProjectRepository
         command.ExecuteNonQuery();
     }
 
-    public async Task<CreateResult<Project>> CreateAsync(string project, Project entity, CancellationToken cancellationToken = default)
+    public async Task<CRUDResult<Project>> CreateAsync(string project, Project entity, CancellationToken cancellationToken = default)
     {
         // TODO: Call verify. If success then create the database file, call initialize so
         // the project table is created. Then create an entry in the database for the project.
@@ -43,11 +43,11 @@ public sealed class ProjectRepositorySqlite : BaseRepository, IProjectRepository
 
         var connectionData = _connectionCache.GetConnectionData<SqliteConnectionData>(project);
         if (connectionData == null)
-            return new CreateResult<Project>(ResultCode.Failure, entity, "Failed to retrieve connection data.");
+            return new CRUDResult<Project>(ResultCode.Failure, entity, "Failed to retrieve connection data.");
 
         var validateResult = await ValidateCreateAsync(project, entity, cancellationToken);
         if (validateResult.ResultCode == ResultCode.Failure)
-            return new CreateResult<Project>(ResultCode.Failure, entity, "Validation failed.");
+            return new CRUDResult<Project>(ResultCode.Failure, entity, "Validation failed.");
 
         string connectionString = connectionData.ConnectionString;
         using var connection = new SqliteConnection(connectionString);
@@ -59,25 +59,25 @@ public sealed class ProjectRepositorySqlite : BaseRepository, IProjectRepository
 
         await command.ExecuteNonQueryAsync(cancellationToken);
 
-        return new CreateResult<Project>(ResultCode.Success, entity);
+        return new CRUDResult<Project>(ResultCode.Success, entity);
     }
 
-    public Task<DeleteResult> DeleteAsync(string project, uint id, CancellationToken cancellationToken = default)
+    public Task<CRUDResult<Project>> DeleteAsync(string project, uint id, CancellationToken cancellationToken = default)
     {
         // TODO: Not sure if this will be here or not
 
         var connectionData = _connectionCache.GetConnectionData<SqliteConnectionData>(project);
         if (connectionData == null)
-            return Task.FromResult(new DeleteResult(ResultCode.Failure, id, "Failed to retrieve connection data."));
+            return Task.FromResult(new CRUDResult<Project>(ResultCode.Failure, id, "Failed to retrieve connection data."));
 
         string filePath = connectionData.GetFilePath();
         if (File.Exists(filePath))
             File.Delete(filePath);
 
-        return Task.FromResult(new DeleteResult(ResultCode.Success, id));
+        return Task.FromResult(new CRUDResult<Project>(ResultCode.Success, id));
     }
 
-    public async Task<UpdateResult<Project>> UpdateAsync(string project, Project entity, CancellationToken cancellationToken = default)
+    public async Task<CRUDResult<Project>> UpdateAsync(string project, Project entity, CancellationToken cancellationToken = default)
     {
         // TODO: call verify. If success, then rename the database if the projectname is different.
         // then update the project name in the database. 
@@ -85,11 +85,11 @@ public sealed class ProjectRepositorySqlite : BaseRepository, IProjectRepository
 
         var connectionData = _connectionCache.GetConnectionData<SqliteConnectionData>(project);
         if (connectionData == null)
-            return new UpdateResult<Project>(ResultCode.Failure, entity, "Failed to retrieve connection data.");
+            return new CRUDResult<Project>(ResultCode.Failure, entity, "Failed to retrieve connection data.");
 
         var validateResult = await ValidateUpdateAsync(project, entity, cancellationToken);
         if (validateResult.ResultCode == ResultCode.Failure)
-            return new UpdateResult<Project>(ResultCode.Failure, entity, "Validation failed.");
+            return new CRUDResult<Project>(ResultCode.Failure, entity, "Validation failed.");
 
         string connectionString = connectionData.ConnectionString;
         string oldFilePath = connectionString.Replace("Data Source=", "");
@@ -115,7 +115,7 @@ public sealed class ProjectRepositorySqlite : BaseRepository, IProjectRepository
         //if (rowsAffected == 0)
         //    return new UpdateResult<Project>(ResultCode.Failure, entity, "Project not found.");
 
-        return new UpdateResult<Project>(ResultCode.Success, entity);
+        return new CRUDResult<Project>(ResultCode.Success, entity);
     }
 
     public async Task<ValidateResult> ValidateCreateAsync(string project, Project entity, CancellationToken cancellationToken = default)

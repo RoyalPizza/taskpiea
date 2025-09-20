@@ -27,15 +27,15 @@ public sealed class UserRepositorySqlite : BaseRepository, IUserRepository
         command.ExecuteNonQuery();
     }
 
-    public async Task<CreateResult<User>> CreateAsync(string project, User entity, CancellationToken cancellationToken = default)
+    public async Task<CRUDResult<User>> CreateAsync(string project, User entity, CancellationToken cancellationToken = default)
     {
         var connectionData = _connectionCache.GetConnectionData<SqliteConnectionData>(project);
         if (connectionData == null)
-            return new CreateResult<User>(ResultCode.Failure, entity, "Failed to retrieve connection data.");
+            return new CRUDResult<User>(ResultCode.Failure, entity, "Failed to retrieve connection data.");
 
         var validateResult = await ValidateCreateAsync(project, entity, cancellationToken);
         if (validateResult.ResultCode == ResultCode.Failure)
-            return new CreateResult<User>(ResultCode.Failure, entity, "Validation failed.");
+            return new CRUDResult<User>(ResultCode.Failure, entity, "Validation failed.");
 
         string connectionString = connectionData.ConnectionString;
         using var connection = new SqliteConnection(connectionString);
@@ -48,14 +48,14 @@ public sealed class UserRepositorySqlite : BaseRepository, IUserRepository
         var id = Convert.ToUInt32(await command.ExecuteScalarAsync(cancellationToken));
         entity.Id = id;
 
-        return new CreateResult<User>(ResultCode.Success, entity);
+        return new CRUDResult<User>(ResultCode.Success, entity);
     }
 
-    public async Task<DeleteResult> DeleteAsync(string project, uint id, CancellationToken cancellationToken = default)
+    public async Task<CRUDResult<User>> DeleteAsync(string project, uint id, CancellationToken cancellationToken = default)
     {
         var connectionData = _connectionCache.GetConnectionData<SqliteConnectionData>(project);
         if (connectionData == null)
-            return new DeleteResult(ResultCode.Failure, id, "Failed to retrieve connection data.");
+            return new CRUDResult<User>(ResultCode.Failure, id, "Failed to retrieve connection data.");
 
         string connectionString = connectionData.ConnectionString;
         using var connection = new SqliteConnection(connectionString);
@@ -66,20 +66,20 @@ public sealed class UserRepositorySqlite : BaseRepository, IUserRepository
         var rowsAffected = await command.ExecuteNonQueryAsync(cancellationToken);
 
         if (rowsAffected == 0)
-            return new DeleteResult(ResultCode.Failure, id, "Failed to delete record.");
+            return new CRUDResult<User>(ResultCode.Failure, id, "Failed to delete record.");
 
-        return new DeleteResult(ResultCode.Success, id);
+        return new CRUDResult<User>(ResultCode.Success, id);
     }
 
-    public async Task<UpdateResult<User>> UpdateAsync(string project, User entity, CancellationToken cancellationToken = default)
+    public async Task<CRUDResult<User>> UpdateAsync(string project, User entity, CancellationToken cancellationToken = default)
     {
         var connectionData = _connectionCache.GetConnectionData<SqliteConnectionData>(project);
         if (connectionData == null)
-            return new UpdateResult<User>(ResultCode.Failure, entity, "Failed to retrieve connection data.");
+            return new CRUDResult<User>(ResultCode.Failure, entity, "Failed to retrieve connection data.");
 
         var validateResult = await ValidateUpdateAsync(project, entity, cancellationToken);
         if (validateResult.ResultCode == ResultCode.Failure)
-            return new UpdateResult<User>(ResultCode.Failure, entity, "Validation failed.");
+            return new CRUDResult<User>(ResultCode.Failure, entity, "Validation failed.");
 
         string connectionString = connectionData.ConnectionString;
         using var connection = new SqliteConnection(connectionString);
@@ -92,9 +92,9 @@ public sealed class UserRepositorySqlite : BaseRepository, IUserRepository
         var rowsAffected = await cmd.ExecuteNonQueryAsync(cancellationToken);
 
         if (rowsAffected == 0)
-            return new UpdateResult<User>(ResultCode.Failure, entity, "User not found.");
+            return new CRUDResult<User>(ResultCode.Failure, entity, "User not found.");
 
-        return new UpdateResult<User>(ResultCode.Success, entity);
+        return new CRUDResult<User>(ResultCode.Success, entity);
     }
 
     public async Task<ValidateResult> ValidateCreateAsync(string project, User entity, CancellationToken cancellationToken = default)

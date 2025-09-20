@@ -3,7 +3,7 @@
 public class GetSingleResult<T> where T : IEntity
 {
     public ResultCode ResultCode { get; init; }
-    public T? DataObject { get; init; }
+    public T? Entity { get; init; }
     public string ErrorMessage { get; init; } = "";
 
     public GetSingleResult() { }
@@ -11,6 +11,6 @@ public class GetSingleResult<T> where T : IEntity
     {
         ResultCode = resultCode;
         ErrorMessage = errorMessage;
-        DataObject = entity;
+        Entity = entity;
     }
 }

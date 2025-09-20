@@ -28,15 +28,15 @@ public abstract class BaseHTTPRepository<TEntity> : BaseRepository, IRepository<
         request.Headers.Add("X-Project-Id", connectionData.ProjectName);
     }
 
-    public async Task<CreateResult<TEntity>> CreateAsync(string project, TEntity entity, CancellationToken cancellationToken = default)
+    public async Task<CRUDResult<TEntity>> CreateAsync(string project, TEntity entity, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(entity);
 
         var connectionData = GetConnectionData(project);
         if (connectionData == null)
-            return new CreateResult<TEntity>(ResultCode.Failure, entity, "Failed to retrieve connection data.");
+            return new CRUDResult<TEntity>(ResultCode.Failure, entity, "Failed to retrieve connection data.");
         if (connectionData.HttpClient == null)
-            return new CreateResult<TEntity>(ResultCode.Failure, entity, "No HTTP client configured.");
+            return new CRUDResult<TEntity>(ResultCode.Failure, entity, "No HTTP client configured.");
 
         // TODO: Update all other HTTP functions to have this request style
         var request = new HttpRequestMessage(HttpMethod.Post, $"api/{_typeName}");
@@ -47,22 +47,22 @@ public abstract class BaseHTTPRepository<TEntity> : BaseRepository, IRepository<
 
         if (response.IsSuccessStatusCode)
         {
-            var result = await response.Content.ReadFromJsonAsync<CreateResult<TEntity>>();
+            var result = await response.Content.ReadFromJsonAsync<CRUDResult<TEntity>>();
             if (result == null)
-                return new CreateResult<TEntity>(ResultCode.Failure, entity, "Failed to deserialize data on create response.");
+                return new CRUDResult<TEntity>(ResultCode.Failure, entity, "Failed to deserialize data on create response.");
             return result;
         }
 
-        return new CreateResult<TEntity>(ResultCode.Failure, entity, "Failed to create data.");
+        return new CRUDResult<TEntity>(ResultCode.Failure, entity, "Failed to create data.");
     }
 
-    public async Task<DeleteResult> DeleteAsync(string project, uint id, CancellationToken cancellationToken = default)
+    public async Task<CRUDResult<TEntity>> DeleteAsync(string project, uint id, CancellationToken cancellationToken = default)
     {
         var connectionData = GetConnectionData(project);
         if (connectionData == null)
-            return new DeleteResult(ResultCode.Failure, id, "Failed to retrieve connection data.");
+            return new CRUDResult<TEntity>(ResultCode.Failure, id, "Failed to retrieve connection data.");
         if (connectionData.HttpClient == null)
-            return new DeleteResult(ResultCode.Failure, id, "No HTTP client configured.");
+            return new CRUDResult<TEntity>(ResultCode.Failure, id, "No HTTP client configured.");
 
         var request = new HttpRequestMessage(HttpMethod.Delete, $"api/{_typeName}/{id}");
         AddProjectToRequest(request, connectionData);
@@ -71,24 +71,24 @@ public abstract class BaseHTTPRepository<TEntity> : BaseRepository, IRepository<
 
         if (response.IsSuccessStatusCode)
         {
-            var result = await response.Content.ReadFromJsonAsync<DeleteResult>();
+            var result = await response.Content.ReadFromJsonAsync<CRUDResult<TEntity>>();
             if (result == null)
-                return new DeleteResult(ResultCode.Failure, id, "Failed to deserialize data on delete response.");
+                return new CRUDResult<TEntity>(ResultCode.Failure, id, "Failed to deserialize data on delete response.");
             return result;
         }
 
-        return new DeleteResult(ResultCode.Failure, id, "Failed to delete data.");
+        return new CRUDResult<TEntity>(ResultCode.Failure, id, "Failed to delete data.");
     }
 
-    public async Task<UpdateResult<TEntity>> UpdateAsync(string project, TEntity entity, CancellationToken cancellationToken = default)
+    public async Task<CRUDResult<TEntity>> UpdateAsync(string project, TEntity entity, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(entity);
 
         var connectionData = GetConnectionData(project);
         if (connectionData == null)
-            return new UpdateResult<TEntity>(ResultCode.Failure, entity, "Failed to retrieve connection data.");
+            return new CRUDResult<TEntity>(ResultCode.Failure, entity, "Failed to retrieve connection data.");
         if (connectionData.HttpClient == null)
-            return new UpdateResult<TEntity>(ResultCode.Failure, entity, "No HTTP client configured.");
+            return new CRUDResult<TEntity>(ResultCode.Failure, entity, "No HTTP client configured.");
 
         var request = new HttpRequestMessage(HttpMethod.Put, $"api/{_typeName}");
         AddProjectToRequest(request, connectionData);
@@ -98,13 +98,13 @@ public abstract class BaseHTTPRepository<TEntity> : BaseRepository, IRepository<
 
         if (response.IsSuccessStatusCode)
         {
-            var result = await response.Content.ReadFromJsonAsync<UpdateResult<TEntity>>();
+            var result = await response.Content.ReadFromJsonAsync<CRUDResult<TEntity>>();
             if (result == null)
-                return new UpdateResult<TEntity>(ResultCode.Failure, entity, "Failed to deserialize data on update response.");
+                return new CRUDResult<TEntity>(ResultCode.Failure, entity, "Failed to deserialize data on update response.");
             return result;
         }
 
-        return new UpdateResult<TEntity>(ResultCode.Failure, entity, "Failed to update data.");
+        return new CRUDResult<TEntity>(ResultCode.Failure, entity, "Failed to update data.");
     }
 
     public async Task<ValidateResult> ValidateCreateAsync(string project, TEntity entity, CancellationToken cancellationToken = default)

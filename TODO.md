@@ -74,3 +74,7 @@ For project opening, in standalone mode its simply just open the db file and tha
 		- if the user wants to save as a server project, that is also in the save as. Either way, that flow can be decided a bit later. To streamline it. But most likely there will be some system to default to local and a "Save To Server" button seperate as save as. We shall see.
 
 		- For my WPF task app, I need to create a project file. I want creating a new project to default to a temporary name and path. I assume appdata is best for the path. And for the filename I will need to do some sort of "NewProjectX" where x is a number that makes it unique. Which means I need to read the files from that path, and check in order what is available. Like NewProject1, NewProject2, etc.. What is the best way to do this? Oh, I also need to make sure this "AppData" folder exists. And I assume I should use roaming?
+
+
+## Redesign
+- to save time
