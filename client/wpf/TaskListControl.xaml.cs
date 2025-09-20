@@ -1,5 +1,4 @@
-﻿using System.Diagnostics;
-using System.Windows.Controls;
+﻿using System.Windows.Controls;
 using Taskpiea.Core.Tasks;
 
 namespace Taskpiea.WPFClient
@@ -33,30 +32,24 @@ namespace Taskpiea.WPFClient
             }
             else if (e.EditAction == DataGridEditAction.Cancel)
             {
+                // TODO: just revert the changes instead of doing an entire refresh
                 AppDataCache.shared.Refresh();
             }
         }
 
         private async void DataGrid_RowEditEnding(object sender, DataGridRowEditEndingEventArgs e)
         {
-            if (e.EditAction == DataGridEditAction.Commit)
-            {
-                var viewModel = DataContext as TaskListViewModel;
-                var task = e.Row.Item as TaskItem;
-                if (viewModel != null && task != null)
-                {
-                    if (task.Id == 0)
-                        await viewModel.CreateNewTaskCommand.ExecuteAsync(task);
-                    else
-                        await viewModel.UpdateTaskCommand.ExecuteAsync(task);
-                }
-            }
+            if (e.EditAction != DataGridEditAction.Commit)
+                return;
+            if (DataContext == null || e.Row.Item == null)
+                return;
+            if (DataContext is not TaskListViewModel viewModel || e.Row.Item is not TaskItem taskItem)
+                return;
+            
+            if (taskItem.Id == 0)
+                await viewModel.CreateAsync(taskItem);
             else
-            {
-                Debug.WriteLine("Row: " + e.EditAction.ToString());
-            }
+                await viewModel.UpdateAsync(taskItem);
         }
-
-        
     }
 }

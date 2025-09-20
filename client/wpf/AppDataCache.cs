@@ -12,6 +12,7 @@ namespace Taskpiea.WPFClient;
 public sealed class AppDataCache : INotifyPropertyChanged
 {
     public static AppDataCache shared { get; } = new AppDataCache();
+    public static string ProjectName => shared.Project?.Name ?? ""; // just for convinience
 
     public IProjectProber ProjectProber { get; init; }
     public IConnectionCache ConnectionCache { get; init; }
@@ -41,7 +42,7 @@ public sealed class AppDataCache : INotifyPropertyChanged
         ProjectProber = new ProjectProberSqlite();
     }
 
-    public void OpenProject<TConnection>(TConnection connectionData) where TConnection : BaseConnectionData
+    public async Task OpenProjectAsync<TConnection>(TConnection connectionData) where TConnection : BaseConnectionData
     {
         Project = new Project() { Name = connectionData.ProjectName };
 
@@ -51,6 +52,8 @@ public sealed class AppDataCache : INotifyPropertyChanged
 
         _taskRepository = RepositoryManager.Get<ITaskRepository>();
         _userRepository = RepositoryManager.Get<IUserRepository>();
+
+        await Refresh();
     }
 
     public void CloseProject()

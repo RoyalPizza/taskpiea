@@ -20,17 +20,17 @@ namespace Taskpiea.WPFClient
             MainContentControl.Content = new HomeScreenControl();
         }
 
-        private void NewProjectMenuItem_Click(object sender, RoutedEventArgs e)
+        private async void NewProjectMenuItem_Click(object sender, RoutedEventArgs e)
         {
             // create a new project with defaults
             var newProjectName = AppDataCache.shared.ProjectProber.GetNewDefaultProjectName();
             var newProjectDirectory = AppDataCache.shared.ProjectProber.GetDefaultProjectDirectory();
             SqliteConnectionData connectionData = new SqliteConnectionData(newProjectName, newProjectDirectory);
-            AppDataCache.shared.OpenProject(connectionData);
+            await AppDataCache.shared.OpenProjectAsync(connectionData);
             MainContentControl.Content = new TaskListControl();
         }
 
-        private void OpenProjectMenuItem_Click(object sender, RoutedEventArgs e)
+        private async void OpenProjectMenuItem_Click(object sender, RoutedEventArgs e)
         {
             if (AppDataCache.shared.Project != null)
                 AppDataCache.shared.CloseProject();
@@ -51,7 +51,7 @@ namespace Taskpiea.WPFClient
                 string projectName = Path.GetFileNameWithoutExtension(openFileDialog.FileName);
                 string projectDirectory = Path.GetDirectoryName(openFileDialog.FileName);
                 SqliteConnectionData connectionData = new SqliteConnectionData(projectName, projectDirectory);
-                AppDataCache.shared.OpenProject(connectionData);
+                await AppDataCache.shared.OpenProjectAsync(connectionData);
                 MainContentControl.Content = new TaskListControl();
             }
         }

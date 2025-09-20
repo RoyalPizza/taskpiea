@@ -10,14 +10,10 @@
         <local:UserListViewModel />
     </UserControl.DataContext>
     <DockPanel>
-        <StackPanel Orientation="Horizontal" DockPanel.Dock="Top" Margin="0,0,0,5">
-            <TextBox Width="200" Text="{Binding NewUserName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
-            <Button Content="Add" Command="{Binding CreateNewUserCommand}" Margin="5,0,0,0"/>
-        </StackPanel>
-
-        <DataGrid ItemsSource="{Binding UsersView}" AutoGenerateColumns="False" CanUserDeleteRows="True">
+        <DataGrid Name="UsersDataGrid" ItemsSource="{Binding UsersView}" AutoGenerateColumns="False" CanUserReorderColumns="False" CanUserDeleteRows="True"
+                  AddingNewItem="DataGrid_AddingNewItem" InitializingNewItem="DataGrid_InitializingNewItem" RowEditEnding="DataGrid_RowEditEnding"  CellEditEnding="DataGrid_CellEditEnding">
             <DataGrid.Columns>
-                <DataGridTextColumn Header="Name" Binding="{Binding Name}" Width="200" />
+                <DataGridTextColumn Header="Name" Binding="{Binding Name, UpdateSourceTrigger=PropertyChanged}" Width="200" />
             </DataGrid.Columns>
         </DataGrid>
     </DockPanel>

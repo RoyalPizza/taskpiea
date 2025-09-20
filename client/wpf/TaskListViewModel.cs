@@ -1,7 +1,5 @@
-﻿using CommunityToolkit.Mvvm.Input;
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.Diagnostics;
-using System.Threading.Tasks;
 using System.Windows.Data;
 using Taskpiea.Core.Results;
 using Taskpiea.Core.Tasks;
@@ -12,11 +10,6 @@ internal class TaskListViewModel : INotifyPropertyChanged
 {
     public event PropertyChangedEventHandler? PropertyChanged;
     public ICollectionView TasksView { get; }
-    public IAsyncRelayCommand<TaskItem, CreateResult<TaskItem>> CreateNewTaskCommand { get; }
-    public IAsyncRelayCommand<TaskItem, UpdateResult<TaskItem>> UpdateTaskCommand { get; }
-    public IAsyncRelayCommand DeleteTaskCommand { get; }
-    public IRelayCommand ToggleCompletedFilterCommand { get; }
-
 
     private bool _showCompletedOnly;
     public bool ShowCompletedOnly
@@ -34,51 +27,19 @@ internal class TaskListViewModel : INotifyPropertyChanged
         }
     }
 
-    private string _newTaskName = "";
-    public string NewTaskName
-    {
-        get => _newTaskName;
-        set
-        {
-            _newTaskName = value;
-            OnPropertyChanged(nameof(NewTaskName));
-            CreateNewTaskCommand.NotifyCanExecuteChanged();
-        }
-    }
-
-    private string _newTaskDescription = "";
-    public string NewTaskDescription
-    {
-        get => _newTaskDescription;
-        set
-        {
-            _newTaskDescription = value;
-            OnPropertyChanged(nameof(NewTaskDescription));
-        }
-    }
-
     private readonly ITaskRepository _taskRepository;
 
     public TaskListViewModel()
     {
-        _ = LoadAsync();
-
-        // TODO: Later on consider DI but I need to wait until I code more UI first
         _taskRepository = AppDataCache.shared.RepositoryManager.Get<ITaskRepository>();
-
         TasksView = CollectionViewSource.GetDefaultView(AppDataCache.shared.Tasks);
         TasksView.Filter = TaskFilter;
-
-        //CreateNewTaskCommand = new AsyncRelayCommand(CreateAsync, NewTaskNameValid);
-        CreateNewTaskCommand = new AsyncRelayCommand<TaskItem, CreateResult<TaskItem>?>(CreateAsync);
-        DeleteTaskCommand = new AsyncRelayCommand<TaskItem>(DeleteAsync);
-        UpdateTaskCommand = new AsyncRelayCommand<TaskItem>(UpdateAsync);
-        ToggleCompletedFilterCommand = new RelayCommand(() => { ShowCompletedOnly = !ShowCompletedOnly; });
     }
 
-    protected void OnPropertyChanged(string name) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
-
-    private bool NewTaskNameValid() => !string.IsNullOrWhiteSpace(NewTaskName);
+    protected void OnPropertyChanged(string name)
+    {
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+    }
 
     private bool TaskFilter(object obj)
     {
@@ -87,90 +48,82 @@ internal class TaskListViewModel : INotifyPropertyChanged
         return !ShowCompletedOnly || task.Status == Status.Done;
     }
 
-    private async Task LoadAsync()
+    public async Task CreateAsync(TaskItem taskItem)
     {
-        await AppDataCache.shared.Refresh();
-    }
-
-    [Obsolete]
-    private async Task CreateAsyncOld()
-    {
-        var newTask = new TaskItem
-        {
-            Name = NewTaskName,
-            Description = NewTaskDescription,
-            Status = Status.Open
-        };
-
-        var validateResult = await _taskRepository.ValidateCreateAsync(AppDataCache.shared.Project.Name, newTask);
-        if (validateResult.ResultCode == ResultCode.Success)
-        {
-            var createResult = await _taskRepository.CreateAsync(AppDataCache.shared.Project.Name, newTask);
-            if (createResult.ResultCode == ResultCode.Success)
-            {
-                AppDataCache.shared.Tasks.Add(newTask);
-                NewTaskName = "";
-                NewTaskDescription = "";
-            }
-        }
-
-        // TODO: Remove
-        for (int i = 0; i < 100; i++)
-        {
-            continue;
-            TaskItem item = new TaskItem() { Name = i.ToString(), Description = $"Test description {i}", Status = Status.Open, Assignee = null };
-            var result = _taskRepository.CreateAsync(AppDataCache.shared.Project.Name, item);
-        }
-    }
-
-    private async Task<CreateResult<TaskItem>?> CreateAsync(TaskItem? taskItem)
-    {
-        ArgumentNullException.ThrowIfNull(taskItem);
-
         Debug.WriteLine("TaskListViewModel::CreateAsync");
-
-        var validateResult = await _taskRepository.ValidateCreateAsync(AppDataCache.shared.Project.Name, taskItem);
-        if (validateResult.ResultCode == ResultCode.Success)
-        {
-            var createResult = await _taskRepository.CreateAsync(AppDataCache.shared.Project.Name, taskItem);
-            if (createResult.ResultCode == ResultCode.Success)
-            {
-                NewTaskName = "";
-                NewTaskDescription = "";
-                return createResult;
-            }
-        }
-
-        return new CreateResult<TaskItem>(ResultCode.Failure, taskItem, "Failed!");
-    }
-
-    private async Task<UpdateResult<TaskItem>> UpdateAsync(TaskItem? taskItem)
-    {
         ArgumentNullException.ThrowIfNull(taskItem);
 
-        var validateResult = await _taskRepository.ValidateUpdateAsync(AppDataCache.shared.Project.Name, taskItem);
+        var validateResult = await _taskRepository.ValidateCreateAsync(AppDataCache.ProjectName, taskItem);
         if (validateResult.ResultCode == ResultCode.Success)
         {
-            var updateResult = await _taskRepository.UpdateAsync(AppDataCache.shared.Project.Name, taskItem);
+            var createResult = await _taskRepository.CreateAsync(AppDataCache.ProjectName, taskItem);
+            if (createResult.ResultCode == ResultCode.Success)
+            {
+                // do nothing because binding handles updates
+            }
+            else
+            {
+                // TODO: Log/display error
+            }
+        }
+        else
+        {
+            // TODO: Log/display error
+        }
+    }
+
+    public async Task UpdateAsync(TaskItem taskItem)
+    {
+        Debug.WriteLine("TaskListViewModel::UpdateAsync");
+        ArgumentNullException.ThrowIfNull(taskItem);
+
+        var validateResult = await _taskRepository.ValidateUpdateAsync(AppDataCache.ProjectName, taskItem);
+        if (validateResult.ResultCode == ResultCode.Success)
+        {
+            var updateResult = await _taskRepository.UpdateAsync(AppDataCache.ProjectName, taskItem);
             if (updateResult.ResultCode == ResultCode.Success)
             {
-                return updateResult;
+                // do nothing because binding handles updates
+            }
+            else
+            {
+                // TODO: Log/display error
             }
         }
-
-        return new UpdateResult<TaskItem>(ResultCode.Failure, taskItem, "Failed!");
-        
-        Debug.WriteLine("TaskListViewModel::UpdateAsync");
+        else
+        {
+            // TODO: Log/display error
+        }
     }
 
-    private async Task DeleteAsync(TaskItem? task)
+    public async Task DeleteAsync(TaskItem taskItem)
     {
-        ArgumentNullException.ThrowIfNull(task);
-
-        var deleteResult = await _taskRepository.DeleteAsync(AppDataCache.shared.Project.Name, task.Id);
-        if (deleteResult.ResultCode == ResultCode.Success)
-            AppDataCache.shared.Tasks.Remove(task);
-
         Debug.WriteLine("TaskListViewModel::DeleteAsync");
+        ArgumentNullException.ThrowIfNull(taskItem);
+
+        var deleteResult = await _taskRepository.DeleteAsync(AppDataCache.ProjectName, taskItem.Id);
+        if (deleteResult.ResultCode == ResultCode.Success)
+            AppDataCache.shared.Tasks.Remove(taskItem);
+        else
+        {
+            // TODO: Log/display error
+        }
+    }
+
+    public async Task CreateDummyDataAsync(uint numberOfRecords)
+    {
+        // TODO: Remove
+
+        for (int i = 0; i < numberOfRecords; i++)
+        {
+            var taskItem = new TaskItem()
+            {
+                Name = $"Dummy Task {i}",
+                Description = $"Test description {i}",
+                Status = Status.Open,
+                Assignee = null
+            };
+            var result = await _taskRepository.CreateAsync(AppDataCache.ProjectName, taskItem);
+        }
     }
 }

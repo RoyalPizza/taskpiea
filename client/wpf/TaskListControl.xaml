@@ -10,12 +10,6 @@
         <local:TaskListViewModel />
     </UserControl.DataContext>
     <DockPanel>
-        <StackPanel Orientation="Horizontal" DockPanel.Dock="Top" Margin="0,0,0,5">
-            <TextBox Width="200" Text="{Binding NewTaskName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Margin="5"/>
-            <TextBox Width="300" Text="{Binding NewTaskDescription, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Margin="5"/>
-            <!--<Button Content="Add" Command="{Binding CreateNewTaskCommand}" Margin="5"/>-->
-        </StackPanel>
-
         <DataGrid ItemsSource="{Binding TasksView}" AutoGenerateColumns="False" AddingNewItem="DataGrid_AddingNewItem"  RowEditEnding="DataGrid_RowEditEnding"  CellEditEnding="DataGrid_CellEditEnding" >
             <DataGrid.Columns>
                 <DataGridTextColumn Header="Name" Binding="{Binding Name, UpdateSourceTrigger=PropertyChanged}" Width="200"/>
