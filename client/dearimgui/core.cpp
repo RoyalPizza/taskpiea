@@ -10,7 +10,7 @@
 
 using namespace Taskpiea;
 
-static const int TASK_STATUS_COUNT = 4;
+static const size_t TASK_STATUS_COUNT = 4;
 static const TaskStatus TaskStatusArray[] = { TaskStatus::OPEN, TaskStatus::IN_PROGRESS, TaskStatus::VERIFY, TaskStatus::DONE };
 static const char* TaskStatusNameArray[] = { "OPEN", "IN PROGRESS", "VERIFY", "DONE" };
 static const ImVec4 StatusColors[] = {
@@ -45,12 +45,19 @@ void DataCache::Clear() {
 }
 
 bool DataCache::ArchiveUser(unsigned int id) {
+	for (size_t i = 0; i < tasks.size(); i++) {
+		if (tasks[i].assigneeId == id) {
+			tasks[i].assigneeId = 0;
+		}
+	}
+	
 	for (size_t i = 0; i < users.size(); i++) {
 		if (users[i].id == id) {
 			users[i].archived = true;
 			return true;
 		}
 	}
+
 	return false;
 }
 
@@ -86,6 +93,9 @@ bool DataCache::UpdateUser(const User& user) {
 }
 
 ValidationResult DataCache::ValidateUser(const User& user) {
+	if (user.name.empty()) {
+		return ValidationResult::Failure("name is empty");
+	}
 	for (size_t i = 0; i < users.size(); i++) {
 		if (users[i].id != user.id && users[i].name == user.name) {
 			return ValidationResult::Failure("name field must be unique");
@@ -167,12 +177,31 @@ void App::CreateUI() {
 		default:
 			break;
 	};
-	if (uiContext.usersControl.visible) {
-		CreateUsersControl();
+	if (uiContext.usersPopupControl.visible) {
+		CreateUsersPopupControl();
 	}
-	if (uiContext.aboutControl.visible) {
+	if (uiContext.aboutPopupControl.visible) {
 		CreateAboutControl();
 	}
+
+	std::vector<size_t> controlsToRemove;
+	for (size_t i = 0; i < uiContext.taskPopupControls.size(); i++) {
+		TaskPopupControl& control = uiContext.taskPopupControls.at(i);
+		if (control.visible) {
+			CreateTaskPopupControl(control);
+		} else {
+			controlsToRemove.push_back(i);
+		}
+	}
+	// loop through controlsToRemove and remove them from uiContext.taskPopupControls
+	while (controlsToRemove.size() > 0) {
+		size_t indexToRemove = controlsToRemove.back();
+		uiContext.taskPopupControls.at(indexToRemove) = uiContext.taskPopupControls.back();
+		uiContext.taskPopupControls.pop_back();
+		//uiContext.taskPopupControls.erase(uiContext.taskPopupControls.begin() + indexToRemove);
+		controlsToRemove.pop_back();
+	}
+
 	ImGui::End();
 }
 
@@ -192,19 +221,19 @@ void App::CreateMainMenu() {
 		}
 		if (ImGui::BeginMenu("Project")) {
 			//(ImGui::MenuItem("Edit Tasks");
-			if (ImGui::MenuItem("Edit Users", nullptr, false, projectIsOpen)) { uiContext.usersControl.Show(); }
+			if (ImGui::MenuItem("Edit Users", nullptr, false, projectIsOpen)) { uiContext.usersPopupControl.Show(); }
 			ImGui::EndMenu();
 		}
 		if (ImGui::BeginMenu("Help")) {
-			if (ImGui::MenuItem("About")) { uiContext.aboutControl.Show(); }
+			if (ImGui::MenuItem("About")) { uiContext.aboutPopupControl.Show(); }
 			ImGui::EndMenu();
 		}
 		ImGui::EndMainMenuBar();
 	}
 }
 
-void App::CreateUsersControl() {
-	ImGui::Begin("UsersControl", &uiContext.usersControl.visible);
+void App::CreateUsersPopupControl() {
+	ImGui::Begin("UsersControl", &uiContext.usersPopupControl.visible);
 	static ImGuiTableFlags flags = ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersOuter | ImGuiTableFlags_BordersV
 		| ImGuiTableFlags_NoBordersInBody | ImGuiTableFlags_ScrollY;
 
@@ -218,8 +247,8 @@ void App::CreateUsersControl() {
 		clipper.Begin(dataCache.users.size());
 		while (clipper.Step()) {
 			for (int i = clipper.DisplayStart; i < clipper.DisplayEnd; i++) {
-				User& user = (dataCache.users.at(i).id == uiContext.usersControl.editingUser.id)
-					? uiContext.usersControl.editingUser
+				User& user = (dataCache.users.at(i).id == uiContext.usersPopupControl.editingUser.id)
+					? uiContext.usersPopupControl.editingUser
 					: dataCache.users.at(i);
 
 				ImGui::PushID(user.id);
@@ -234,13 +263,13 @@ void App::CreateUsersControl() {
 				// - red border on validate fail (does not work because textbox text is cached by imgui, not on my object)
 				// - pres escape at any time to cancel
 
-				if (uiContext.usersControl.editingUser.id == user.id) {
+				if (uiContext.usersPopupControl.editingUser.id == user.id) {
 					char buffer[256];
 					strncpy_s(buffer, user.name.c_str(), sizeof(buffer));
 					ImGui::SetNextItemWidth(200.0f); // Set width to 200 pixels
-					if (uiContext.usersControl.focusFlag) {
+					if (uiContext.usersPopupControl.focusFlag) {
 						ImGui::SetKeyboardFocusHere();
-						uiContext.usersControl.focusFlag = false;
+						uiContext.usersPopupControl.focusFlag = false;
 					}
 					auto result = dataCache.ValidateUser(user);
 					if (result.isSuccess == false) {
@@ -250,23 +279,23 @@ void App::CreateUsersControl() {
 					if (ImGui::InputText("##Name", buffer, sizeof(buffer), ImGuiInputTextFlags_EnterReturnsTrue)) {
 						user.name = buffer;
 						dataCache.UpdateUser(user);
-						uiContext.usersControl.editingUser = User();
+						uiContext.usersPopupControl.editingUser = User();
 					} else {
 						user.name = buffer;
 					}
 					if (ImGui::IsKeyPressed(ImGuiKey_Escape)) {
-						uiContext.usersControl.editingUser = User();
+						uiContext.usersPopupControl.editingUser = User();
 					}
 					if (result.isSuccess == false) {
 						ImGui::PopStyleColor(); // Reset border color
 						ImGui::PopStyleVar(); // Reset border size
 					}
 				}
-				else if (uiContext.usersControl.editingUser.id == 0) {
+				else if (uiContext.usersPopupControl.editingUser.id == 0) {
 					if (ImGui::Selectable(user.name.c_str(), false, ImGuiSelectableFlags_AllowDoubleClick | ImGuiSelectableFlags_AllowItemOverlap)) {
 						if (ImGui::IsMouseDoubleClicked(0)) {
-							uiContext.usersControl.editingUser = User(user);
-							uiContext.usersControl.focusFlag = true;
+							uiContext.usersPopupControl.editingUser = User(user);
+							uiContext.usersPopupControl.focusFlag = true;
 						}
 					}
 					if (ImGui::BeginPopupContextItem("context_menu")) {
@@ -302,10 +331,10 @@ void App::CreateTasksControl() {
 
 	if (ImGui::BeginTable("Tasks", 5, flags, ImVec2(0.0f, ImGui::GetContentRegionAvail().y), 0.0f)) {
 		ImGui::TableSetupColumn("ID", ImGuiTableColumnFlags_WidthFixed, 0.0f, TASK_FIELD_ID);
-		ImGui::TableSetupColumn("Name", ImGuiTableColumnFlags_WidthFixed, 0.0f, TASK_FIELD_NAME);
-		ImGui::TableSetupColumn("Description", ImGuiTableColumnFlags_WidthFixed, 0.0f, TASK_FIELD_DESCRPTION);
+		ImGui::TableSetupColumn("Name", ImGuiTableColumnFlags_WidthFixed, 200.0f, TASK_FIELD_NAME);
+		ImGui::TableSetupColumn("Description", ImGuiTableColumnFlags_WidthFixed, 500.0f, TASK_FIELD_DESCRPTION);
 		ImGui::TableSetupColumn("Status", ImGuiTableColumnFlags_WidthFixed, 0.0f, TASK_FIELD_STATUS);
-		ImGui::TableSetupColumn("Assignee", ImGuiTableColumnFlags_WidthFixed, 0.0f, TASK_FIELD_ASSIGNEE);
+		ImGui::TableSetupColumn("Assignee", ImGuiTableColumnFlags_WidthFixed, 150.0f, TASK_FIELD_ASSIGNEE);
 		ImGui::TableSetupScrollFreeze(0, 1); // Make row always visible
 		ImGui::TableHeadersRow();
 
@@ -317,7 +346,17 @@ void App::CreateTasksControl() {
 				ImGui::PushID(task.id);
 				ImGui::TableNextRow();
 				ImGui::TableNextColumn();
-				ImGui::Text("%04d", task.id);
+				
+				char buffer[16];
+				snprintf(buffer, sizeof(buffer), "%04d", task.id);
+				const char* taskId = buffer;
+				float rowHeight = ImGui::GetFrameHeight();
+				if (ImGui::Selectable(taskId, false, ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_AllowOverlap | ImGuiSelectableFlags_AllowDoubleClick, ImVec2(0, rowHeight))) {
+					if (ImGui::IsMouseDoubleClicked(0)) {
+						AddTaskPopup(task);
+					}
+				}
+
 				ImGui::TableNextColumn();
 				ImGui::TextUnformatted(task.name.c_str());
 				ImGui::TableNextColumn();
@@ -325,12 +364,11 @@ void App::CreateTasksControl() {
 				ImGui::TableNextColumn();
 
 				// status requires no verification, always allow it to change
-				const char* comboPreviewValue = GetTaskStatusName(task.status);
+				const char* statusPreview = GetTaskStatusName(task.status);
 				ImGui::SetNextItemWidth(120.0f);
 				ImGui::PushStyleColor(ImGuiCol_Text, GetTaskStatusColor(task.status));
 				ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
-				if (ImGui::BeginCombo("", comboPreviewValue, ImGuiComboFlags_HeightSmall))
-				{
+				if (ImGui::BeginCombo("##Status", statusPreview, ImGuiComboFlags_HeightSmall)) {
 					for (size_t i = 0; i < TASK_STATUS_COUNT; ++i) {
 						bool isSelected = task.status == TaskStatusArray[i];
 						ImGui::PushStyleColor(ImGuiCol_Text, GetTaskStatusColor(TaskStatusArray[i]));
@@ -348,7 +386,30 @@ void App::CreateTasksControl() {
 				ImGui::PopStyleColor(2);				
 				ImGui::TableNextColumn();
 
-				ImGui::TextUnformatted("ASSIGNEE");
+				User currentUser = dataCache.GetUser(task.assigneeId);
+				const char* assigneePreview = (task.assigneeId != 0) ? currentUser.name.c_str() : "None";
+				ImGui::SetNextItemWidth(120.0f);
+				if (ImGui::BeginCombo("##Assignee", assigneePreview, ImGuiComboFlags_HeightLarge)) {
+					if (ImGui::Selectable("None", task.assigneeId == 0)) {
+						task.assigneeId = 0;
+					}
+					for (size_t i = 0; i < dataCache.users.size(); i++) {
+						User& user = dataCache.users.at(i);
+						bool isSelected = task.assigneeId == user.id;
+						if (ImGui::Selectable(user.name.c_str(), isSelected)) {
+							task.assigneeId = user.id;
+						}
+						if (isSelected) {
+							ImGui::SetItemDefaultFocus();
+						}
+					}
+					ImGui::EndCombo();
+				}
+
+				if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left)) {
+					AddTaskPopup(task);
+				}
+
 				ImGui::PopID();
 			}
 		}
@@ -357,8 +418,27 @@ void App::CreateTasksControl() {
 	ImGui::EndTable();
 }
 
+void App::CreateTaskPopupControl(TaskPopupControl& control) {
+	std::string label = "#" + std::to_string(control.editingTask->id);
+	ImGui::SetNextWindowSize(ImVec2(300, 300), ImGuiCond_FirstUseEver);
+	ImGui::Begin(label.c_str(), &control.visible, ImGuiWindowFlags_NoSavedSettings);
+	ImGui::Text(control.editingTask->name.c_str());
+	ImGui::End();
+}
+
+void App::AddTaskPopup(Task& task) {
+	for (int i = 0; i < uiContext.taskPopupControls.size(); i++) {
+		const TaskPopupControl& control = uiContext.taskPopupControls.at(i);
+		if (control.editingTask->id == task.id) {
+			return; // return now because one already exists
+		}
+	}
+
+	uiContext.taskPopupControls.push_back(TaskPopupControl(&task));
+}
+
 void App::CreateAboutControl() {
-    ImGui::Begin("AboutControl", &uiContext.aboutControl.visible);
+    ImGui::Begin("AboutControl", &uiContext.aboutPopupControl.visible);
 
 	// GOOFY AI GENERATED ASCII ART FOR THE HECK OF IT
 
@@ -424,6 +504,145 @@ std::string OpenFileDialog() {
 	return "";
 }
 
+#include <random>
+void App::CreateDummyData() {
+	std::vector<std::string> names = {
+        "Alice Smith", "Bob Johnson", "Charlie Brown", "Diana Wilson", "Emma Davis",
+        "Frank Miller", "Grace Taylor", "Henry Anderson", "Isabella Thomas", "Jack White"
+    };
+
+	for (int i = 0; i < names.size(); i++) {
+		User user;
+		user.name = names.at(i);
+		user.lastUpdated = 0;
+		user.archived = false;
+
+		dataCache.CreateUser(user);
+	}
+
+	std::vector<std::pair<std::string, std::string>> tasks = {
+        {"Implement Login Module", "Create secure user authentication with OAuth2."},
+        {"Optimize Database Queries", "Refactor SQL queries for better performance."},
+        {"Design REST API", "Develop endpoints for user management system."},
+        {"Fix Memory Leaks", "Identify and resolve memory leaks in backend."},
+        {"Add Unit Tests", "Write unit tests for payment processing module."},
+        {"Refactor Legacy Code", "Modernize old codebase to use C++20 features."},
+        {"Integrate CI/CD Pipeline", "Set up Jenkins for automated builds."},
+        {"Create UI Components", "Develop reusable React components for dashboard."},
+        {"Enhance Error Handling", "Improve exception handling in core services."},
+        {"Migrate to Cloud", "Move application to AWS infrastructure."},
+        {"Add Logging Framework", "Implement structured logging with spdlog."},
+        {"Optimize Frontend", "Reduce page load time for web app."},
+        {"Secure API Endpoints", "Add JWT authentication to REST APIs."},
+        {"Write Documentation", "Create API documentation using Swagger."},
+        {"Improve Caching", "Implement Redis for session caching."},
+        {"Fix UI Bugs", "Resolve alignment issues in mobile view."},
+        {"Add Feature Flags", "Implement feature toggles for A/B testing."},
+        {"Upgrade Dependencies", "Update third-party libraries to latest versions."},
+        {"Automate Testing", "Set up Selenium for end-to-end tests."},
+        {"Refactor Database Schema", "Normalize tables for better scalability."},
+        {"Implement Rate Limiting", "Add rate limiting to prevent API abuse."},
+        {"Add Monitoring", "Integrate Prometheus for system monitoring."},
+        {"Optimize Build Process", "Reduce build time with parallel compilation."},
+        {"Create CLI Tool", "Develop command-line tool for admin tasks."},
+        {"Add Localization", "Support multiple languages in UI."},
+        {"Fix Security Vulnerabilities", "Address XSS issues in frontend."},
+        {"Implement WebSockets", "Add real-time updates to chat feature."},
+        {"Refactor Authentication", "Switch to single sign-on system."},
+        {"Add Backup System", "Implement automated database backups."},
+        {"Optimize Images", "Compress images for faster page loads."},
+        {"Create Admin Panel", "Build dashboard for user management."},
+        {"Add Analytics", "Integrate Google Analytics for user tracking."},
+        {"Fix Concurrency Issues", "Resolve race conditions in multithreaded code."},
+        {"Implement Search", "Add Elasticsearch for full-text search."},
+        {"Upgrade Framework", "Migrate to latest Spring Boot version."},
+        {"Add Notifications", "Implement email notifications for user actions."},
+        {"Refactor CSS", "Switch to Tailwind CSS for styling."},
+        {"Improve Accessibility", "Ensure WCAG compliance for UI."},
+        {"Add GraphQL API", "Implement GraphQL for flexible queries."},
+        {"Optimize Docker Images", "Reduce container size for faster deployment."},
+        {"Fix API Latency", "Improve response time for critical endpoints."},
+        {"Add Load Balancer", "Set up Nginx for load balancing."},
+        {"Implement Caching Layer", "Use Memcached for query caching."},
+        {"Refactor Monolith", "Break down app into microservices."},
+        {"Add Audit Logging", "Track user actions for compliance."},
+        {"Fix Broken Links", "Resolve 404 errors in web app."},
+        {"Implement OAuth", "Add Google login support."},
+        {"Optimize SQL Joins", "Refactor complex joins for performance."},
+        {"Add Dark Mode", "Implement dark theme for UI."},
+        {"Fix Session Bugs", "Resolve session expiration issues."},
+        {"Create API Client", "Build Python client for REST API."},
+        {"Add Health Checks", "Implement endpoint for system status."},
+        {"Refactor ORM", "Switch to SQLAlchemy for database access."},
+        {"Improve Test Coverage", "Increase unit test coverage to 90%."},
+        {"Add Rate Limiter", "Implement throttling for API requests."},
+        {"Fix Memory Usage", "Optimize memory consumption in backend."},
+        {"Add User Roles", "Implement role-based access control."},
+        {"Optimize Frontend Build", "Reduce Webpack build time."},
+        {"Add File Upload", "Support file uploads in web app."},
+        {"Fix CORS Issues", "Resolve cross-origin request problems."},
+        {"Implement Pagination", "Add pagination to API responses."},
+        {"Add Metrics Dashboard", "Create Grafana dashboard for metrics."},
+        {"Refactor Middleware", "Simplify Express middleware logic."},
+        {"Add Email Templates", "Design HTML templates for emails."},
+        {"Fix Data Validation", "Strengthen input validation in forms."},
+        {"Implement Pub/Sub", "Add Redis Pub/Sub for event handling."},
+        {"Optimize CDN Usage", "Configure Cloudflare for static assets."},
+        {"Add API Versioning", "Support multiple API versions."},
+        {"Fix Unit Test Failures", "Resolve flaky tests in CI."},
+        {"Add Backup Encryption", "Encrypt database backups."},
+        {"Refactor State Management", "Switch to Redux for state handling."},
+        {"Add Rate Limiting Middleware", "Implement throttling in Express."},
+        {"Fix API Documentation", "Update outdated API docs."},
+        {"Add Session Management", "Implement secure session handling."},
+        {"Optimize Query Performance", "Index tables for faster queries."},
+        {"Add User Feedback", "Implement feedback form in UI."},
+        {"Fix Mobile Bugs", "Resolve issues in responsive design."},
+        {"Add Logging Levels", "Configure debug/info/error logging."},
+        {"Implement Circuit Breaker", "Add resilience to API calls."},
+        {"Add API Mocking", "Create mocks for API testing."},
+        {"Fix Data Migration", "Resolve issues in database migration."},
+        {"Add User Onboarding", "Create guided tour for new users."},
+        {"Optimize Webpack Config", "Improve frontend build performance."},
+        {"Add Error Tracking", "Integrate Sentry for error monitoring."},
+        {"Fix Authentication Bugs", "Resolve issues in login flow."},
+        {"Add Data Export", "Implement CSV export for reports."},
+        {"Refactor API Routes", "Simplify routing structure."},
+        {"Add Multi-Tenancy", "Support multiple clients in app."},
+        {"Fix Performance Bottlenecks", "Optimize slow API endpoints."},
+        {"Add Custom Dashboards", "Allow users to create dashboards."},
+        {"Implement Retry Logic", "Add retries for failed API calls."},
+        {"Fix UI Flickering", "Resolve rendering issues in React."},
+        {"Add Data Validation", "Strengthen backend input validation."},
+        {"Optimize Asset Delivery", "Use CDN for static assets."},
+        {"Add User Permissions", "Implement fine-grained permissions."},
+        {"Fix Memory Leaks in Tests", "Resolve leaks in test suite."},
+        {"Add API Rate Limits", "Enforce limits on API usage."},
+        {"Refactor Build Scripts", "Simplify CI/CD build process."},
+        {"Add Offline Support", "Implement service workers for offline mode."}
+    };
+
+	std::vector<int> assigneeIds;
+	for (int i = 0; i < names.size(); i++) { assigneeIds.push_back(i + 1); }
+	for (int i = 0; i < 5; i++) { assigneeIds.push_back(0); } // just to have a chance to have no assignee
+	std::vector<TaskStatus> statuses = {TaskStatus::OPEN, TaskStatus::IN_PROGRESS, TaskStatus::VERIFY, TaskStatus::DONE};
+	std::mt19937 rng(static_cast<unsigned>(time(nullptr)));
+    std::uniform_int_distribution<size_t> assigneeDist(0, assigneeIds.size() - 1);
+    std::uniform_int_distribution<size_t> statusDist(0, statuses.size() - 1);
+
+	for (int i = 0; i < tasks.size(); i++) {
+		Task task;
+		task.name = tasks.at(i).first;
+		task.description = tasks.at(i).second;
+		task.status = statuses[statusDist(rng)];
+		task.assigneeId = assigneeIds[assigneeDist(rng)];
+		task.lastUpdated = 0;
+		task.archived = false;
+
+		dataCache.CreateTask(task);
+	}
+}
+
 void App::CreateProject() {
 	dataCache.Clear();
 	uiContext = {};
@@ -431,26 +650,7 @@ void App::CreateProject() {
 
 	dataCache.project.name = "New Project";
 
-	for (int i = 1; i < 1000; i++) {
-		User user;
-		user.name = "Test User " + std::to_string(i);
-		user.lastUpdated = 0;
-		user.archived = false;
-
-		dataCache.CreateUser(user);
-	}
-
-	for (int i = 1; i < 1000; i++) {
-		Task task;
-		task.name = "Test Task " + std::to_string(i);
-		task.description = "Some task description.";
-		task.status = TaskStatus::OPEN;
-		task.assigneeId = 0;
-		task.lastUpdated = 0;
-		task.archived = false;
-
-		dataCache.CreateTask(task);
-	}
+	CreateDummyData();
 }
 
 void App::OpenProject() {

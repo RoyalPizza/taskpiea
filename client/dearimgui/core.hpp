@@ -92,23 +92,28 @@ namespace Taskpiea {
 		void CreateUI();
 	};
 
-	class UsersControl {
+	class UsersPopupControl {
 	public:
-		bool visible;
 		User editingUser;
 		bool focusFlag = false;
-
+		bool visible;
 		void Show() { visible = true; }
 		void Hide() { visible = false; }
 	};
 
 	class TasksControl {
-	public: 
-		Task editingTask;
-		bool focusFlag = false;
 	};
 
-	class AboutControl {
+	class TaskPopupControl {
+	public:
+		Task* editingTask;
+		bool visible;
+		TaskPopupControl(Task* task) : editingTask(task), visible(true) {}
+		void Show() { visible = true; }
+		void Hide() { visible = false; }
+	};
+
+	class AboutPopupControl {
 	public:
 		bool visible;
 		void Show() { visible = true; }
@@ -118,9 +123,10 @@ namespace Taskpiea {
 	struct UIContext {
 		UIScreen currentScreen;
 		HomeControl homeControl;
-		UsersControl usersControl;
+		UsersPopupControl usersPopupControl;
 		TasksControl tasksControl;
-		AboutControl aboutControl;
+		std::vector<TaskPopupControl> taskPopupControls;
+		AboutPopupControl aboutPopupControl;
 	};
 
 	class App {
@@ -129,10 +135,16 @@ namespace Taskpiea {
 		UIContext uiContext;
 		void CreateUI();
 	private:
+		void CreateDummyData();
+
 		void CreateMainMenu();
-		void CreateUsersControl();
+		void CreateUsersPopupControl();
 		void CreateTasksControl();
+		void CreateTaskPopupControl(TaskPopupControl& control);
 		void CreateAboutControl();
+
+		void AddTaskPopup(Task& task);
+		
 		void CreateProject();
 		void OpenProject();
 		void CloseProject();
