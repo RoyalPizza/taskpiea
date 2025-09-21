@@ -108,11 +108,19 @@ namespace Taskpiea {
 		bool focusFlag = false;
 	};
 
+	class AboutControl {
+	public:
+		bool visible;
+		void Show() { visible = true; }
+		void Hide() { visible = false; }
+	};
+
 	struct UIContext {
 		UIScreen currentScreen;
 		HomeControl homeControl;
 		UsersControl usersControl;
 		TasksControl tasksControl;
+		AboutControl aboutControl;
 	};
 
 	class App {
@@ -124,8 +132,10 @@ namespace Taskpiea {
 		void CreateMainMenu();
 		void CreateUsersControl();
 		void CreateTasksControl();
+		void CreateAboutControl();
 		void CreateProject();
 		void OpenProject();
 		void CloseProject();
+		void SaveProject();
 	};
 }

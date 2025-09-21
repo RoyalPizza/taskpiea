@@ -170,26 +170,33 @@ void App::CreateUI() {
 	if (uiContext.usersControl.visible) {
 		CreateUsersControl();
 	}
+	if (uiContext.aboutControl.visible) {
+		CreateAboutControl();
+	}
 	ImGui::End();
 }
 
 void App::CreateMainMenu() {
+	bool projectIsOpen = dataCache.project.name != "";
+
 	if (ImGui::BeginMainMenuBar())
 	{
-		if (ImGui::BeginMenu("File"))
-		{
+		if (ImGui::BeginMenu("File")) {
 			if (ImGui::MenuItem("Create Project")) { CreateProject(); }
 			if (ImGui::MenuItem("Open Project", "Ctrl+O")) { OpenProject(); }
-			if (ImGui::MenuItem("Close Project")) { CloseProject(); }
+			if (ImGui::MenuItem("Close Project", nullptr, false, projectIsOpen)) { CloseProject(); }
+			if (ImGui::MenuItem("Save Project", "Ctrl+S", false, projectIsOpen)) { SaveProject(); }
 			ImGui::Separator();
-			ImGui::MenuItem("Exit", "Alt+F4");
+			if (ImGui::MenuItem("Exit", "Alt+F4")) { }
 			ImGui::EndMenu();
 		}
-		if (ImGui::BeginMenu("Project"))
-		{
-			//if (ImGui::MenuItem("Edit Tasks")) ;
-			bool is_enabled = dataCache.project.name != "";
-			if (ImGui::MenuItem("Edit Users", nullptr, false, dataCache.project.name != "")) { uiContext.usersControl.Show(); }
+		if (ImGui::BeginMenu("Project")) {
+			//(ImGui::MenuItem("Edit Tasks");
+			if (ImGui::MenuItem("Edit Users", nullptr, false, projectIsOpen)) { uiContext.usersControl.Show(); }
+			ImGui::EndMenu();
+		}
+		if (ImGui::BeginMenu("Help")) {
+			if (ImGui::MenuItem("About")) { uiContext.aboutControl.Show(); }
 			ImGui::EndMenu();
 		}
 		ImGui::EndMainMenuBar();
@@ -350,6 +357,56 @@ void App::CreateTasksControl() {
 	ImGui::EndTable();
 }
 
+void App::CreateAboutControl() {
+    ImGui::Begin("AboutControl", &uiContext.aboutControl.visible);
+
+	// GOOFY AI GENERATED ASCII ART FOR THE HECK OF IT
+
+    static float t = 0.0f;
+    t += ImGui::GetIO().DeltaTime * 3.0f;
+    int frame = (int)t % 2;
+
+    // Colors
+    ImVec4 crust   = ImVec4(0.9f, 0.7f, 0.4f, 1.0f);
+    ImVec4 cheese  = ImVec4(1.0f, 1.0f, 0.2f, 1.0f);
+    ImVec4 pep     = ImVec4(0.9f, 0.1f, 0.1f, 1.0f);
+    ImVec4 olive   = ImVec4(0.1f, 0.6f, 0.1f, 1.0f);
+    ImVec4 sparkle = ImVec4(1.0f, 0.8f, 0.8f, 1.0f);
+
+    const char* pie[9] = {
+        "      ______      ",
+        "   .-'      `-.   ",
+        " .'            `. ",
+        "/   O   o   o    \\",
+        "|  o   PIZZA!  o |",
+        "\\    o   o   O   /",
+        " `.            .' ",
+        "   `-.______.-'   ",
+        "                  "
+    };
+
+    for (int i = 0; i < 9; i++) {
+        for (const char* c = pie[i]; *c; c++) {
+            if (*c == 'O' || *c == 'o') {
+                if (((c - pie[i]) + i + frame) % 2 == 0)
+                    ImGui::SameLine(0,0), ImGui::TextColored(pep, "o");
+                else
+                    ImGui::SameLine(0,0), ImGui::TextColored(olive, "o");
+            } else if (*c == '.' || *c == '-' || *c == '_' || *c == '`' || *c == '\'' || *c == '/') {
+                ImGui::SameLine(0,0), ImGui::TextColored(crust, "%c", *c);
+            } else if (*c == '*') {
+                ImGui::SameLine(0,0), ImGui::TextColored(sparkle, "%c", frame ? '*' : ' ');
+            } else {
+                ImGui::SameLine(0,0), ImGui::TextColored(cheese, "%c", *c);
+            }
+        }
+        // end of line → let ImGui break naturally
+        ImGui::NewLine();
+    }
+
+    ImGui::End();
+}
+
 std::string OpenFileDialog() {
 	OPENFILENAME ofn = { 0 };
 	wchar_t szFile[260] = { 0 };
@@ -369,6 +426,7 @@ std::string OpenFileDialog() {
 
 void App::CreateProject() {
 	dataCache.Clear();
+	uiContext = {};
 	uiContext.currentScreen = UIScreen::TASKS_SCREEN;
 
 	dataCache.project.name = "New Project";
@@ -404,5 +462,10 @@ void App::OpenProject() {
 
 void App::CloseProject() {
 	dataCache.Clear();
+	uiContext = {};
 	uiContext.currentScreen = UIScreen::HOME_SCREEN;
+}
+
+void App::SaveProject() {
+	// TODO: Implement
 }
