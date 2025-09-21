@@ -42,10 +42,13 @@ namespace Taskpiea {
 	enum UserFields { USER_FIELD_ID, USER_FIELD_NAME, USER_FIELD_LAST_UPDATED, USER_FIELD_ARCHIVED };
 
 	struct User {
-		unsigned int id;
+		unsigned int id; // min value = 1
 		std::string name;
 		std::int64_t lastUpdated;
 		bool archived;
+		
+		User() : id(0), name(""), lastUpdated(0), archived(false) {}
+		User(const User& other) : id(other.id), name(other.name), lastUpdated(other.lastUpdated), archived(other.archived) {}
 	};
 
 	enum TaskFileds { TASK_FIELD_ID, TASK_FIELD_NAME, TASK_FIELD_DESCRPTION, TASK_FIELD_STATUS, TASK_FIELD_ASSIGNEE, TASK_FIELD_LAST_UPDATED, TASK_FIELD_ARCHIVED };
@@ -82,25 +85,34 @@ namespace Taskpiea {
 		ValidationResult ValidateTask(const Task& task);
 	};
 
-	enum class UIScreen { HOME_SCREEN, USERS_SCREEN, TASKS_SCREEN };
+	enum class UIScreen { HOME_SCREEN, TASKS_SCREEN };
 
-	class HomeScreen {
+	class HomeControl {
 	public:
 		void CreateUI();
 	};
 
-	class UsersScreen {
+	class UsersControl {
 	public:
-		int editingId = -1;
-		int editingField = -1;
+		bool visible;
+		User editingUser;
 		bool focusFlag = false;
-		void CreateUI();
+
+		void Show() { visible = true; }
+		void Hide() { visible = false; }
+	};
+
+	class TasksControl {
+	public: 
+		Task editingTask;
+		bool focusFlag = false;
 	};
 
 	struct UIContext {
 		UIScreen currentScreen;
-		HomeScreen homeScreen;
-		UsersScreen usersScreen;
+		HomeControl homeControl;
+		UsersControl usersControl;
+		TasksControl tasksControl;
 	};
 
 	class App {
@@ -110,8 +122,8 @@ namespace Taskpiea {
 		void CreateUI();
 	private:
 		void CreateMainMenu();
-		void CreateUsersScreen();
-		void CreateTasksScreen();
+		void CreateUsersControl();
+		void CreateTasksControl();
 		void CreateProject();
 		void OpenProject();
 		void CloseProject();

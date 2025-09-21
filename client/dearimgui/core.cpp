@@ -10,6 +10,32 @@
 
 using namespace Taskpiea;
 
+static const int TASK_STATUS_COUNT = 4;
+static const TaskStatus TaskStatusArray[] = { TaskStatus::OPEN, TaskStatus::IN_PROGRESS, TaskStatus::VERIFY, TaskStatus::DONE };
+static const char* TaskStatusNameArray[] = { "OPEN", "IN PROGRESS", "VERIFY", "DONE" };
+static const ImVec4 StatusColors[] = {
+	{0.5f, 0.5f, 0.5f, 1.0f}, // OPEN: Gray
+	{0.5f, 0.0f, 1.0f, 1.0f}, // IN_PROGRESS: Purple
+	{1.0f, 1.0f, 0.0f, 1.0f}, // VERIFY: Yellow
+	{0.0f, 1.0f, 0.0f, 1.0f}  // DONE: Green
+};
+
+const char* GetTaskStatusName(TaskStatus status) {
+	size_t index = static_cast<size_t>(status);
+	if (index < TASK_STATUS_COUNT) {
+		return TaskStatusNameArray[index];
+	}
+	return "UNKNOWN";
+}
+
+ImVec4 GetTaskStatusColor(TaskStatus status) {
+	size_t index = static_cast<size_t>(status);
+	if (index < TASK_STATUS_COUNT) {
+		return StatusColors[index];
+	}
+	return ImVec4(1.0f, 1.0f, 1.0f, 1.0f); // White fallback
+}
+
 // TODO: Change this to be a map instead
 
 void DataCache::Clear() {
@@ -69,6 +95,12 @@ ValidationResult DataCache::ValidateUser(const User& user) {
 }
 
 bool DataCache::ArchiveTask(unsigned int id) {
+	for (size_t i = 0; i < tasks.size(); i++) {
+		if (tasks[i].id == id) {
+			tasks[i].archived = true;
+			return true;
+		}
+	}
 	return false;
 }
 
@@ -83,14 +115,28 @@ bool DataCache::CreateTask(Task task) {
 }
 
 Task DataCache::GetTask(unsigned int id) {
+	for (size_t i = 0; i < tasks.size(); i++) {
+		if (tasks[i].id == id)
+			return tasks[i];
+	}
 	return Task();
 }
 
 bool DataCache::UpdateTask(const Task& task) {
+	ValidationResult result = ValidateTask(task);
+	if (result.isSuccess) {
+		for (size_t i = 0; i < tasks.size(); i++) {
+			if (tasks[i].id == task.id) {
+				tasks[i] = task;
+				return true;
+			}
+		}
+	}
 	return false;
 }
 
 ValidationResult DataCache::ValidateTask(const Task& task) {
+	// as of right now, there is nothing to validate for tasks
 	return ValidationResult::Success();
 }
 
@@ -107,23 +153,23 @@ ValidationResult DataCache::ValidateTask(const Task& task) {
 void App::CreateUI() {
 	CreateMainMenu();
 	static ImGuiWindowFlags flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove
-		| ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings;
+		| ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoBringToFrontOnFocus;
 	ImGuiViewport* viewport = ImGui::GetMainViewport();
 	ImGui::SetNextWindowPos(viewport->WorkPos);
 	ImGui::SetNextWindowSize(viewport->WorkSize);
 	ImGui::Begin("Main", nullptr, flags);
 	switch (uiContext.currentScreen) {
-	case UIScreen::HOME_SCREEN:
-		break;
-	case UIScreen::USERS_SCREEN:
-		CreateUsersScreen();
-		break;
-	case UIScreen::TASKS_SCREEN:
-		CreateTasksScreen();
-		break;
-	default:
-		break;
+		case UIScreen::HOME_SCREEN:
+			break;
+		case UIScreen::TASKS_SCREEN:
+			CreateTasksControl();
+			break;
+		default:
+			break;
 	};
+	if (uiContext.usersControl.visible) {
+		CreateUsersControl();
+	}
 	ImGui::End();
 }
 
@@ -141,15 +187,17 @@ void App::CreateMainMenu() {
 		}
 		if (ImGui::BeginMenu("Project"))
 		{
-			ImGui::MenuItem("Edit Tasks");
-			ImGui::MenuItem("Edit Users");
+			//if (ImGui::MenuItem("Edit Tasks")) ;
+			bool is_enabled = dataCache.project.name != "";
+			if (ImGui::MenuItem("Edit Users", nullptr, false, dataCache.project.name != "")) { uiContext.usersControl.Show(); }
 			ImGui::EndMenu();
 		}
 		ImGui::EndMainMenuBar();
 	}
 }
 
-void App::CreateUsersScreen() {
+void App::CreateUsersControl() {
+	ImGui::Begin("UsersControl", &uiContext.usersControl.visible);
 	static ImGuiTableFlags flags = ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersOuter | ImGuiTableFlags_BordersV
 		| ImGuiTableFlags_NoBordersInBody | ImGuiTableFlags_ScrollY;
 
@@ -163,7 +211,10 @@ void App::CreateUsersScreen() {
 		clipper.Begin(dataCache.users.size());
 		while (clipper.Step()) {
 			for (int i = clipper.DisplayStart; i < clipper.DisplayEnd; i++) {
-				User& user = dataCache.users.at(i);
+				User& user = (dataCache.users.at(i).id == uiContext.usersControl.editingUser.id)
+					? uiContext.usersControl.editingUser
+					: dataCache.users.at(i);
+
 				ImGui::PushID(user.id);
 				ImGui::TableNextRow();
 				ImGui::TableNextColumn();
@@ -176,13 +227,13 @@ void App::CreateUsersScreen() {
 				// - red border on validate fail (does not work because textbox text is cached by imgui, not on my object)
 				// - pres escape at any time to cancel
 
-				if (uiContext.usersScreen.editingField == USER_FIELD_NAME && uiContext.usersScreen.editingId == user.id) {
+				if (uiContext.usersControl.editingUser.id == user.id) {
 					char buffer[256];
 					strncpy_s(buffer, user.name.c_str(), sizeof(buffer));
 					ImGui::SetNextItemWidth(200.0f); // Set width to 200 pixels
-					if (uiContext.usersScreen.focusFlag) {
+					if (uiContext.usersControl.focusFlag) {
 						ImGui::SetKeyboardFocusHere();
-						uiContext.usersScreen.focusFlag = false;
+						uiContext.usersControl.focusFlag = false;
 					}
 					auto result = dataCache.ValidateUser(user);
 					if (result.isSuccess == false) {
@@ -192,24 +243,23 @@ void App::CreateUsersScreen() {
 					if (ImGui::InputText("##Name", buffer, sizeof(buffer), ImGuiInputTextFlags_EnterReturnsTrue)) {
 						user.name = buffer;
 						dataCache.UpdateUser(user);
-						uiContext.usersScreen.editingId = -1;
-						uiContext.usersScreen.editingField = -1;
+						uiContext.usersControl.editingUser = User();
+					} else {
+						user.name = buffer;
 					}
 					if (ImGui::IsKeyPressed(ImGuiKey_Escape)) {
-						uiContext.usersScreen.editingId = -1;
-						uiContext.usersScreen.editingField = -1;
+						uiContext.usersControl.editingUser = User();
 					}
 					if (result.isSuccess == false) {
 						ImGui::PopStyleColor(); // Reset border color
 						ImGui::PopStyleVar(); // Reset border size
 					}
 				}
-				else if (uiContext.usersScreen.editingField == -1) {
+				else if (uiContext.usersControl.editingUser.id == 0) {
 					if (ImGui::Selectable(user.name.c_str(), false, ImGuiSelectableFlags_AllowDoubleClick | ImGuiSelectableFlags_AllowItemOverlap)) {
 						if (ImGui::IsMouseDoubleClicked(0)) {
-							uiContext.usersScreen.editingId = user.id;
-							uiContext.usersScreen.editingField = USER_FIELD_NAME;
-							uiContext.usersScreen.focusFlag = true;
+							uiContext.usersControl.editingUser = User(user);
+							uiContext.usersControl.focusFlag = true;
 						}
 					}
 					if (ImGui::BeginPopupContextItem("context_menu")) {
@@ -232,12 +282,14 @@ void App::CreateUsersScreen() {
 				ImGui::PopID();
 			}
 		}
-	}
 
-	ImGui::EndTable();
+		ImGui::EndTable();
+	}
+	
+	ImGui::End();
 }
 
-void App::CreateTasksScreen() {
+void App::CreateTasksControl() {
 	static ImGuiTableFlags flags = ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersOuter | ImGuiTableFlags_BordersV
 		| ImGuiTableFlags_NoBordersInBody | ImGuiTableFlags_ScrollY;
 
@@ -264,8 +316,31 @@ void App::CreateTasksScreen() {
 				ImGui::TableNextColumn();
 				ImGui::TextUnformatted(task.description.c_str());
 				ImGui::TableNextColumn();
-				ImGui::TextUnformatted("STATUS");
+
+				// status requires no verification, always allow it to change
+				const char* comboPreviewValue = GetTaskStatusName(task.status);
+				ImGui::SetNextItemWidth(120.0f);
+				ImGui::PushStyleColor(ImGuiCol_Text, GetTaskStatusColor(task.status));
+				ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
+				if (ImGui::BeginCombo("", comboPreviewValue, ImGuiComboFlags_HeightSmall))
+				{
+					for (size_t i = 0; i < TASK_STATUS_COUNT; ++i) {
+						bool isSelected = task.status == TaskStatusArray[i];
+						ImGui::PushStyleColor(ImGuiCol_Text, GetTaskStatusColor(TaskStatusArray[i]));
+						if (ImGui::Selectable(TaskStatusNameArray[i], isSelected)) {
+							task.status = TaskStatusArray[i];;
+						}
+						if (isSelected) {
+							ImGui::SetItemDefaultFocus();
+						}
+						ImGui::PopStyleColor();
+					}
+
+					ImGui::EndCombo();
+				}
+				ImGui::PopStyleColor(2);				
 				ImGui::TableNextColumn();
+
 				ImGui::TextUnformatted("ASSIGNEE");
 				ImGui::PopID();
 			}
@@ -294,9 +369,11 @@ std::string OpenFileDialog() {
 
 void App::CreateProject() {
 	dataCache.Clear();
-	uiContext.currentScreen = UIScreen::USERS_SCREEN;
+	uiContext.currentScreen = UIScreen::TASKS_SCREEN;
 
-	for (int i = 1; i < 100; i++) {
+	dataCache.project.name = "New Project";
+
+	for (int i = 1; i < 1000; i++) {
 		User user;
 		user.name = "Test User " + std::to_string(i);
 		user.lastUpdated = 0;
@@ -305,7 +382,7 @@ void App::CreateProject() {
 		dataCache.CreateUser(user);
 	}
 
-	for (int i = 1; i < 100; i++) {
+	for (int i = 1; i < 1000; i++) {
 		Task task;
 		task.name = "Test Task " + std::to_string(i);
 		task.description = "Some task description.";
@@ -326,13 +403,6 @@ void App::OpenProject() {
 }
 
 void App::CloseProject() {
-
-}
-
-void HomeScreen::CreateUI() {
-	//ImGui::Text("HOME SCREEN");
-}
-
-void UsersScreen::CreateUI() {
-	//ImGui::Text("USERS SCREEN");
+	dataCache.Clear();
+	uiContext.currentScreen = UIScreen::HOME_SCREEN;
 }
