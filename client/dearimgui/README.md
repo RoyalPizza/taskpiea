@@ -23,4 +23,3 @@
 - TOML file backend
 - JSON file backend
 - UI audio effects
-- UI audio effects
