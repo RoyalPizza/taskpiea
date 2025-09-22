@@ -1,6 +1,7 @@
 #include "core.hpp"
 
 #include "imgui/imgui.h"
+#include "imgui/imgui_stdlib.h"
 #include <string>
 
 #ifdef _WIN32
@@ -420,9 +421,101 @@ void App::CreateTasksControl() {
 
 void App::CreateTaskPopupControl(TaskPopupControl& control) {
 	std::string label = "#" + std::to_string(control.editingTask->id);
-	ImGui::SetNextWindowSize(ImVec2(300, 300), ImGuiCond_FirstUseEver);
+	ImGui::SetNextWindowSize(ImVec2(400, 500), ImGuiCond_FirstUseEver);
 	ImGui::Begin(label.c_str(), &control.visible, ImGuiWindowFlags_NoSavedSettings);
-	ImGui::Text(control.editingTask->name.c_str());
+
+	Task* task = control.editingTask;
+
+	if (ImGui::BeginTable("##properties", 2, ImGuiTableFlags_ScrollY)) {
+		ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed);
+		ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthStretch, 2.0f);
+
+		ImGui::TableNextRow();
+		ImGui::PushID("name");
+		ImGui::TableNextColumn();
+		ImGui::AlignTextToFramePadding();
+		ImGui::TextUnformatted("name");
+		ImGui::TableNextColumn();
+		char nameBuffer[256];
+		strncpy_s(nameBuffer, task->name.c_str(), sizeof(nameBuffer));
+		// ImVec2(-FLT_MIN, ImGui::GetTextLineHeight()); I use this on my multi line, can I use it on normal line?
+		//ImGui::InputText("##name", nameBuffer, 28);
+		ImGui::SetNextItemWidth(-FLT_MIN); // full width of current column/window
+		//ImGui::InputText("##name", nameBuffer, 28);
+		ImGui::InputText("##name", &task->name);
+
+		ImGui::PopID();
+
+		ImGui::TableNextRow();
+		ImGui::PushID("description");
+		ImGui::TableNextColumn();
+		ImGui::AlignTextToFramePadding();
+		ImGui::TextUnformatted("description");
+		ImGui::TableNextColumn();
+		ImGuiInputTextFlags flags = ImGuiInputTextFlags_AllowTabInput | ImGuiInputTextFlags_WordWrap | ImGuiInputTextFlags_CtrlEnterForNewLine;
+		if (ImGui::InputTextMultiline("##description", &task->description, ImVec2(-FLT_MIN, ImGui::GetTextLineHeight() * 16), flags)) {
+			
+		}
+		ImGui::PopID();
+
+		ImGui::TableNextRow();
+		ImGui::PushID("status");
+		ImGui::TableNextColumn();
+		ImGui::AlignTextToFramePadding();
+		ImGui::TextUnformatted("status");
+		ImGui::TableNextColumn();
+		const char* statusPreview = GetTaskStatusName(task->status);
+		ImGui::SetNextItemWidth(150.0f);
+		ImGui::PushStyleColor(ImGuiCol_Text, GetTaskStatusColor(task->status));
+		ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
+		if (ImGui::BeginCombo("##Status", statusPreview, ImGuiComboFlags_HeightSmall)) {
+			for (size_t i = 0; i < TASK_STATUS_COUNT; ++i) {
+				bool isSelected = task->status == TaskStatusArray[i];
+				ImGui::PushStyleColor(ImGuiCol_Text, GetTaskStatusColor(TaskStatusArray[i]));
+				if (ImGui::Selectable(TaskStatusNameArray[i], isSelected)) {
+					task->status = TaskStatusArray[i];;
+				}
+				if (isSelected) {
+					ImGui::SetItemDefaultFocus();
+				}
+				ImGui::PopStyleColor();
+			}
+
+			ImGui::EndCombo();
+		}
+		ImGui::PopStyleColor(2);				
+		ImGui::PopID();
+
+		ImGui::TableNextRow();
+		ImGui::PushID("assignee");
+		ImGui::TableNextColumn();
+		ImGui::AlignTextToFramePadding();
+		ImGui::TextUnformatted("assignee");
+		ImGui::TableNextColumn();
+		User currentUser = dataCache.GetUser(task->assigneeId);
+		const char* assigneePreview = (task->assigneeId != 0) ? currentUser.name.c_str() : "None";
+		ImGui::SetNextItemWidth(150.0f);
+		if (ImGui::BeginCombo("##Assignee", assigneePreview, ImGuiComboFlags_HeightLarge)) {
+			if (ImGui::Selectable("None", task->assigneeId == 0)) {
+				task->assigneeId = 0;
+			}
+			for (size_t i = 0; i < dataCache.users.size(); i++) {
+				User& user = dataCache.users.at(i);
+				bool isSelected = task->assigneeId == user.id;
+				if (ImGui::Selectable(user.name.c_str(), isSelected)) {
+					task->assigneeId = user.id;
+				}
+				if (isSelected) {
+					ImGui::SetItemDefaultFocus();
+				}
+			}
+			ImGui::EndCombo();
+		}
+		ImGui::PopID();
+
+		ImGui::EndTable();
+	}
+
 	ImGui::End();
 }
 
