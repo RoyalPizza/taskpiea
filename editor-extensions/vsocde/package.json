@@ -1,0 +1,26 @@
+{
+    "name": "taskpiea",
+    "displayName": "Taskpiea",
+    "description": "Task management for .taskp files with auto task ID generation and user autocomplete",
+    "version": "1.0.0",
+    "engines": {
+        "vscode": "^1.80.0"
+    },
+    "categories": [
+        "Other"
+    ],
+    "main": "./src/extension.js",
+    "contributes": {
+        "languages": [
+            {
+                "id": "taskp",
+                "extensions": [".taskp"],
+                "configuration": "./language-configuration.json"
+            }
+        ]
+    },
+    "dependencies": {},
+    "scripts": {
+        "compile": "echo 'No compilation needed'"
+    }
+}
