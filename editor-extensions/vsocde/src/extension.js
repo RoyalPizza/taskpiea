@@ -12,17 +12,19 @@ const SECTIONS = {
 };
 
 class TaskpieaParser {
-    constructor() {
-        // TODO: make these as lets at the top of the class with comments so their type is known.
-        // users is just a string
-        // tasks is "taskName" and "taskId"
-        // settings is just a string
-        this.currentSection = SECTIONS.NONE;
-        this.tasks = [];
-        this.users = [];
-        this.settings = {};
-        this.usedIds = new Set();
-    }
+
+    /** @type {string} Current section being parsed (NONE, TASKS, USERS, SETTINGS) */
+    currentSection = SECTIONS.NONE;
+    /** @type {{ name: string, id: string }[]} Array of tasks with name and id */
+    tasks = [];
+    /** @type {string[]} Array of user names */
+    users = [];
+    /** @type {{ [key: string]: string }} Object mapping setting keys to values */
+    settings = {};
+    /** @type {Set<string>} Set of used task IDs to ensure uniqueness */
+    usedIds = new Set();
+
+    constructor() { }
 
     reset() {
         this.currentSection = SECTIONS.NONE;
@@ -175,7 +177,7 @@ function generateUpdatedText(parsed, document) {
                 output.push(line);
                 continue;
             }
-            
+
             const task = parsed.tasks[taskIndex++];
             if (!taskMatch[2]) {
                 // add missing task ID
