@@ -1,13 +1,11 @@
 # v1
-- auto add settings. on any interaction if some settings do not exist, re add them with default value. Settings section must always exist.
-- @username needs to be colored
-- detect duplicate task id's and replace them with new ones
-- auto run parsing on load (NEED TO TEST)
+- 
 
 # v2
 - add TODOS support. This feature needs to thought out. But it will be similar to other extensions. I need to write out tasks here.
 - add BUGS support. This feature needs to thought out. But it will be similar to other extensions. I need to write out tasks here.
 - use varied colors for the highlighting
+- auto add settings. on any interaction if some settings do not exist, re add them with default value. Settings section must always exist.
 
 # FINAL VERSION
 - move to its own repo and update package.json
