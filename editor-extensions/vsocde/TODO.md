@@ -1,10 +1,8 @@
 # v1
 - auto add settings. on any interaction if some settings do not exist, re add them with default value. Settings section must always exist.
 - @username needs to be colored
-- add support for descriptions/comments
-- run parse on file open
 - detect duplicate task id's and replace them with new ones
-- make any line with -- be considered a "comment"
+- auto run parsing on load (NEED TO TEST)
 
 # v2
 - add TODOS support. This feature needs to thought out. But it will be similar to other extensions. I need to write out tasks here.

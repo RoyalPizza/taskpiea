@@ -13,6 +13,10 @@ const SECTIONS = {
 
 class TaskpieaParser {
     constructor() {
+        // TODO: make these as lets at the top of the class with comments so their type is known.
+        // users is just a string
+        // tasks is "taskName" and "taskId"
+        // settings is just a string
         this.currentSection = SECTIONS.NONE;
         this.tasks = [];
         this.users = [];
@@ -194,6 +198,29 @@ function applyTextEdit(document, newText) {
  */
 export function activate(context) {
     const parser = new TaskpieaParser();
+    
+    context.subscriptions.push(
+        vscode.workspace.onDidChangeWorkspaceFolders(() => {
+            const openDocuments = vscode.workspace.textDocuments;
+            for (const document of openDocuments) {
+                if (document.fileName.endsWith('.taskp')) {
+                    const parsed = parser.parse(document);
+                    const updatedText = generateUpdatedText(parsed, document);
+                    applyTextEdit(document, updatedText);
+                }
+            }
+        })
+    );
+
+    context.subscriptions.push(
+        vscode.workspace.onDidOpenTextDocument(document => {
+            if (!document.fileName.endsWith('.taskp')) return;
+
+            const parsed = parser.parse(document);
+            const updatedText = generateUpdatedText(parsed, document);
+            applyTextEdit(document, updatedText);
+        })
+    );
 
     context.subscriptions.push(
         vscode.workspace.onDidChangeTextDocument(event => {
@@ -203,15 +230,14 @@ export function activate(context) {
             const changes = event.contentChanges;
             if (changes.length === 0) return;
 
-            const change = changes[0]; // TODO: why [0]? Is that just first line? I assume that only matters in a "copy paste" scenario?
-            const newText = change.text; // is this gauranteed to be "new text"? need to understand what possible values are returned under these "changes"
+            // TODO: decide if I need to loop through changes or not
+            const change = changes[0];
+            const newText = change.text;
 
-            //TODO: took out this code document.lineAt(change.range.start.line).text.trim().startsWith('- ')
-            //      might add it back later though.
             if (newText.includes('\n')) {
-                const parsed = parser.parse(document); // parse the file and build the memory objects
-                const updatedText = generateUpdatedText(parsed, document); // build the text the file should be based on parsed objects
-                applyTextEdit(document, updatedText); // tell vscode to update our document
+                const parsed = parser.parse(document);
+                const updatedText = generateUpdatedText(parsed, document);
+                applyTextEdit(document, updatedText);
             }
         })
     );
