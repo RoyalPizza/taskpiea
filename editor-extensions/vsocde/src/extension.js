@@ -175,13 +175,14 @@ function generateUpdatedText(parsed, document) {
                 output.push(line);
                 continue;
             }
-
-            // Only add ID to task if missing, otherwise preserve original
+            
             const task = parsed.tasks[taskIndex++];
             if (!taskMatch[2]) {
+                // add missing task ID
                 output.push(`${line} [#${task.id}]`);
             } else {
-                output.push(line);
+                // replace existing ID with new one (handles duplicates or keeps same if unique)
+                output.push(line.replace(/\[#[A-Z0-9]{5}\]/, `[#${task.id}]`));
             }
         } else {
             // no need to process, go next
