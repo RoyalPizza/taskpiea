@@ -59,7 +59,10 @@
             }
         },
         {
-            "scope": "keyword, storage.type",
+            "scope": [
+                "keyword",
+                "storage.type"
+            ],
             "settings": {
                 "foreground": "#73bedc"
             }
