@@ -7,16 +7,19 @@ const MAX_ID = 1048575;
 const SECTIONS = {
     NONE: 'NONE',
     TASKS: 'TASKS',
+    TODOS: 'TODOS',
     USERS: 'USERS',
-    SETTINGS: 'SETTINGS'
+    SETTINGS: 'SETTINGS',
 };
 
 class TaskpieaParser {
 
-    /** @type {string} Current section being parsed (NONE, TASKS, USERS, SETTINGS) */
+    /** @type {string} Current section being parsed (NONE, TASKS, USERS, SETTINGS, TODO) */
     currentSection = SECTIONS.NONE;
     /** @type {{ name: string, id: string }[]} Array of tasks with name and id */
     tasks = [];
+    /** @type {{ keyword: string, file: string, line: number }[]} Array of TODO items */
+    todos = [];
     /** @type {string[]} Array of user names */
     users = [];
     /** @type {{ [key: string]: string }} Object mapping setting keys to values */
@@ -29,6 +32,7 @@ class TaskpieaParser {
     reset() {
         this.currentSection = SECTIONS.NONE;
         this.tasks = [];
+        //this.todos = [];
         this.users = [];
         this.settings = {};
         this.usedIds = new Set();
@@ -37,7 +41,6 @@ class TaskpieaParser {
     generateId() {
         let id;
         do {
-            // Generate random 5-char hex ID (0-FFFFF)
             id = Math.floor(Math.random() * (MAX_ID + 1))
                 .toString(16)
                 .padStart(5, '0')
@@ -49,17 +52,17 @@ class TaskpieaParser {
 
     /**
     * @param {import('vscode').TextDocument} document - The VSCode document to parse
-    * @returns {{ tasks: { name: string, id: string }[], users: string[], settings: { [key: string]: string } }} Parsed data from .taskp file
+    * @returns {{ tasks: { name: string, id: string }[], users: string[], settings: { [key: string]: string }, todos: { keyword: string, file: string, line: number }[] }} Parsed data from .taskp file
     */
     parse(document) {
-        this.reset(); // internal cache is ALWAYS rebuilt
+        this.reset();
         const lines = document.getText().split('\n');
 
         for (let i = 0; i < lines.length; i++) {
             let line = lines[i];
             line = line.replace(/\r/g, "");
 
-            if (line.trim() === "") continue; // empty line or whitespace only, go next
+            if (line.trim() === "") continue;
 
             // find matches for words between [], allowing leading/trailing whitespace
             // ^\s* = optional leading whitespace
@@ -68,11 +71,11 @@ class TaskpieaParser {
             const sectionMatch = line.match(/^\s*\[(\w+)\]\s*$/);
             if (sectionMatch && SECTIONS[sectionMatch[1]]) {
                 this.currentSection = SECTIONS[sectionMatch[1]];
-                continue; // this was a section line, go next
+                continue;
             }
 
             if (this.currentSection === SECTIONS.NONE) {
-                continue; // not in a section, go next
+                continue;
             } else if (this.currentSection === SECTIONS.TASKS && line.match(/^\s*- /)) {
                 this.parseTask(line);
             } else if (this.currentSection === SECTIONS.SETTINGS && line.includes(':')) {
@@ -82,7 +85,7 @@ class TaskpieaParser {
             }
         }
 
-        return { tasks: this.tasks, users: this.users, settings: this.settings };
+        //return { tasks: this.tasks, users: this.users, settings: this.settings, todos: this.todos };
     }
 
     /**
@@ -97,7 +100,7 @@ class TaskpieaParser {
         // \s*$ = optional trailing whitespace
         const taskMatch = line.match(/^\s*- (.+?)(?: \[#([A-Z0-9]{5})\])?\s*$/);
         if (taskMatch) {
-            const taskName = taskMatch[1]; // keep untrimmed for consistency
+            const taskName = taskMatch[1];
             let taskId = taskMatch[2];
 
             // If task has an ID and it's already used, generate a new one
@@ -116,32 +119,51 @@ class TaskpieaParser {
     }
 
     /**
-    * @param {string} line - The task line to parse from a .taskp file
+    * @param {string} line - The setting line to parse from a .taskp file
     */
     parseSetting(line) {
-        // TODO: Ignore this for now, will test later
-        return;
         const [key, value] = line.split(':').map(s => s.trim());
         this.settings[key] = value;
-        if (key === 'lastId') {
-            const idNum = parseInt(value, 16);
-            if (idNum > this.lastId) this.lastId = idNum;
-        }
     }
 
     /**
-    * @param {string} line - The task line to parse from a .taskp file
+    * @param {string} line - The user line to parse from a .taskp file
     */
     parseUser(line) {
-        // remove leading "- " and keep untrimmed content
         this.users.push(line.replace(/^\s*- /, ''));
+    }
+
+    /**
+     * Scan workspace for TODO keywords
+     * @param {string[]} keywords - Keywords to search for
+     * @param {string[]} excludePatterns - Glob patterns to exclude
+     */
+    async scanTodos(keywords, excludePatterns) {
+        this.todos = [];
+        const files = await vscode.workspace.findFiles('**/*', `{${excludePatterns.join(',')}}`);
+        for (const file of files) {
+            const document = await vscode.workspace.openTextDocument(file);
+            const text = document.getText().split('\n');
+            for (let i = 0; i < text.length; i++) {
+                const line = text[i];
+                for (const keyword of keywords) {
+                    if (line.includes(keyword)) {
+                        this.todos.push({
+                            keyword,
+                            file: file.fsPath,
+                            line: i + 1
+                        });
+                    }
+                }
+            }
+        }
     }
 }
 
 /**
- * @param {{ tasks: { name: string, id: string }[], users: string[], settings: { [key: string]: string } }} parsed - Parsed data from .taskp file
+ * @param {{ tasks: { name: string, id: string }[], users: string[], settings: { [key: string]: string }, todos: { keyword: string, file: string, line: number }[] }} parsed - Parsed data from .taskp file
  * @param {import('vscode').TextDocument} document - The VSCode document to process
- * @returns {string} Updated text with task IDs added where missing
+ * @returns {string} Updated text with task IDs and TODO section
  */
 function generateUpdatedText(parsed, document) {
     // TODO: consider if its worth double parsing. We parse once to put a bunch of objects in memory
@@ -155,20 +177,27 @@ function generateUpdatedText(parsed, document) {
     const lines = document.getText().split('\n');
     let output = [];
     let currentSection = SECTIONS.NONE;
-    let taskIndex = 0; // a gimmicky way to quick index into the tasks array without doing a lookup
+    let taskIndex = 0;
 
     for (let line of lines) {
         line = line.replace(/\r/g, "");
-
-        // determine section
         const sectionMatch = line.match(/^\s*\[(\w+)\]\s*$/);
         if (sectionMatch && SECTIONS[sectionMatch[1]]) {
             currentSection = SECTIONS[sectionMatch[1]];
             output.push(line);
+            if (currentSection === SECTIONS.TODOS) {
+                for (const todo of parsed.todos) {
+                    output.push(`- ${todo.keyword} in ${todo.file}:${todo.line}`);
+                }
+                output.push('\r');
+            }
             continue;
         }
 
-        // process tasks
+        if (currentSection === SECTIONS.TODOS) {
+            continue; // todo section is always overwritten from memory, so just ignore all these lines
+        }
+
         if (currentSection === SECTIONS.TASKS && line.match(/^\s*- /)) {
             const taskMatch = line.match(/^\s*- (.+?)(?: \[#([A-Z0-9]{5})\])?\s*$/);
             if (!taskMatch || taskIndex >= parsed.tasks.length) {
@@ -208,51 +237,42 @@ function applyTextEdit(document, newText) {
 /**
  * @param {import('vscode').ExtensionContext} context - The VSCode extension context
  */
-export function activate(context) {
-    const parser = new TaskpieaParser();
+export async function activate(context) {
+    
+
+    async function processDocument(document) {
+        if (!document.fileName.endsWith('.taskp')) return;
+
+        const parser = new TaskpieaParser();
+
+        //const parsed = parser.parse(document);
+        parser.parse(document);
+        const keywords = parser.settings['todoKeywords']?.split(',').map(k => k.trim()) || ['TODO', 'FIXME'];
+        const excludePatterns = parser.settings['excludePatterns']?.split(',').map(p => p.trim()) || ['**/*.taskp'];
+
+        await parser.scanTodos(keywords, excludePatterns);
+        const updatedText = generateUpdatedText(parser, document);
+        applyTextEdit(document, updatedText);
+    }
 
     context.subscriptions.push(
-        vscode.workspace.onDidChangeWorkspaceFolders(() => {
+        vscode.workspace.onDidChangeWorkspaceFolders(async () => {
             const openDocuments = vscode.workspace.textDocuments;
             for (const document of openDocuments) {
-                if (document.fileName.endsWith('.taskp')) {
-                    const parsed = parser.parse(document);
-                    const updatedText = generateUpdatedText(parsed, document);
-                    applyTextEdit(document, updatedText);
-                }
+                await processDocument(document);
             }
         })
     );
 
     context.subscriptions.push(
-        vscode.workspace.onDidOpenTextDocument(document => {
-            if (!document.fileName.endsWith('.taskp')) return;
-
-            const parsed = parser.parse(document);
-            const updatedText = generateUpdatedText(parsed, document);
-            applyTextEdit(document, updatedText);
-        })
+        vscode.workspace.onDidOpenTextDocument(processDocument)
     );
 
     context.subscriptions.push(
-        vscode.workspace.onDidChangeTextDocument(event => {
-            if (!event.document.fileName.endsWith('.taskp')) return;
-
-            const document = event.document;
-            const changes = event.contentChanges;
-            if (changes.length === 0) return;
-
-            // TODO: decide if I need to loop through changes or not
-            const change = changes[0];
-            const newText = change.text;
-
-            if (newText.includes('\n')) {
-                const parsed = parser.parse(document);
-                const updatedText = generateUpdatedText(parsed, document);
-                applyTextEdit(document, updatedText);
-            }
-        })
+        vscode.workspace.onDidSaveTextDocument(processDocument)
     );
+
+    // TODO: bring back auto task Id generation on pressing return. But dont rescan the TODOs.
 
     context.subscriptions.push(
         vscode.languages.registerCompletionItemProvider(
@@ -262,8 +282,9 @@ export function activate(context) {
                     const line = document.lineAt(position.line).text.substring(0, position.character);
                     if (!line.includes('@')) return [];
 
-                    const parsed = parser.parse(document);
-                    return parsed.users.map(user => {
+                    //const parsed = parser.parse(document);
+                    const parser = new TaskpieaParser();
+                    return parser.users.map(user => {
                         const item = new vscode.CompletionItem(user, vscode.CompletionItemKind.User);
                         item.insertText = user;
                         return item;
@@ -277,11 +298,7 @@ export function activate(context) {
     // Run parser on currently open .taskp files when extension activates
     const openDocuments = vscode.workspace.textDocuments;
     for (const document of openDocuments) {
-        if (document.fileName.endsWith('.taskp')) {
-            const parsed = parser.parse(document);
-            const updatedText = generateUpdatedText(parsed, document);
-            applyTextEdit(document, updatedText);
-        }
+        await processDocument(document);
     }
 }
 
