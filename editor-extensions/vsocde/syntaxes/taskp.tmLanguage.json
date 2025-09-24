@@ -25,7 +25,7 @@
             "match": "\\[([#][A-Z0-9]{5})\\]",
             "captures": {
                 "1": {
-                    "name": "string.quoted"
+                    "name": "string.quoted.taskp"
                 }
             }
         },
@@ -33,9 +33,13 @@
             "match": "\\[(\\w+)\\]",
             "captures": {
                 "1": {
-                    "name": "string.quoted"
+                    "name": "string.quoted.taskp"
                 }
             }
+        },
+        {
+            "match": "@\\w+",
+            "name": "entity.name.tag.taskp"
         }
     ]
 }
