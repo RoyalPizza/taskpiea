@@ -1,5 +1,4 @@
-const vscode = require('vscode');
-//import * as vscode from 'vscode';
+import * as vscode from 'vscode';
 
 // ID are max 5 digit hex. This is shared between anything that needs an ID.
 const MIN_ID = 0;
@@ -217,7 +216,7 @@ export function activate(context) {
 
     context.subscriptions.push(
         vscode.languages.registerCompletionItemProvider(
-            { language: 'taskp', scheme: 'file' },
+            [{ language: 'taskp', scheme: 'file' }, { language: 'taskp', scheme: 'untitled' }],
             {
                 provideCompletionItems(document, position) {
                     const line = document.lineAt(position.line).text.substring(0, position.character);
@@ -236,5 +235,4 @@ export function activate(context) {
     );
 }
 
-module.exports = { activate };
-//export { activate };
+export function deactivate() { }
