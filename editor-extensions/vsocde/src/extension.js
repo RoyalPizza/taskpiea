@@ -96,11 +96,20 @@ class TaskpieaParser {
         const taskMatch = line.match(/^\s*- (.+?)(?: \[#([A-Z0-9]{5})\])?\s*$/);
         if (taskMatch) {
             const taskName = taskMatch[1]; // keep untrimmed for consistency
-            const taskId = taskMatch[2] || this.generateId();
-            this.tasks.push({ name: taskName, id: taskId });
-            if (taskMatch[2]) {
-                this.usedIds.add(taskMatch[2]);
+            let taskId = taskMatch[2];
+
+            // If task has an ID and it's already used, generate a new one
+            if (taskId && this.usedIds.has(taskId)) {
+                taskId = this.generateId();
+            } else if (!taskId) {
+                // If no ID, generate one
+                taskId = this.generateId();
+            } else {
+                // If ID is unique, add it to usedIds
+                this.usedIds.add(taskId);
             }
+
+            this.tasks.push({ name: taskName, id: taskId });
         }
     }
 
@@ -198,7 +207,7 @@ function applyTextEdit(document, newText) {
  */
 export function activate(context) {
     const parser = new TaskpieaParser();
-    
+
     context.subscriptions.push(
         vscode.workspace.onDidChangeWorkspaceFolders(() => {
             const openDocuments = vscode.workspace.textDocuments;
