@@ -18,7 +18,7 @@ class TaskpieaParser {
     currentSection = SECTIONS.NONE;
     /** @type {{ name: string, id: string }[]} Array of tasks with name and id */
     tasks = [];
-    /** @type {{ keyword: string, file: string, line: number }[]} Array of TODO items */
+    /** @type {{ keyword: string, file: string, line: number, content: string }[]} Array of TODO items */
     todos = [];
     /** @type {string[]} Array of user names */
     users = [];
@@ -52,7 +52,7 @@ class TaskpieaParser {
 
     /**
     * @param {import('vscode').TextDocument} document - The VSCode document to parse
-    * @returns {{ tasks: { name: string, id: string }[], users: string[], settings: { [key: string]: string }, todos: { keyword: string, file: string, line: number }[] }} Parsed data from .taskp file
+    * @returns {{ tasks: { name: string, id: string }[], users: string[], settings: { [key: string]: string }, todos: { keyword: string, file: string, line: number, content: string }[] }} Parsed data from .taskp file
     */
     parse(document) {
         this.reset();
@@ -151,7 +151,8 @@ class TaskpieaParser {
                         this.todos.push({
                             keyword,
                             file: file.fsPath,
-                            line: i + 1
+                            line: i + 1,
+                            content: line.trim()
                         });
                     }
                 }
@@ -161,7 +162,7 @@ class TaskpieaParser {
 }
 
 /**
- * @param {{ tasks: { name: string, id: string }[], users: string[], settings: { [key: string]: string }, todos: { keyword: string, file: string, line: number }[] }} parsed - Parsed data from .taskp file
+ * @param {{ tasks: { name: string, id: string }[], users: string[], settings: { [key: string]: string }, todos: { keyword: string, file: string, line: number, content: string }[] }} parsed - Parsed data from .taskp file
  * @param {import('vscode').TextDocument} document - The VSCode document to process
  * @returns {string} Updated text with task IDs and TODO section
  */
@@ -187,7 +188,7 @@ function generateUpdatedText(parsed, document) {
             output.push(line);
             if (currentSection === SECTIONS.TODOS) {
                 for (const todo of parsed.todos) {
-                    output.push(`- ${todo.keyword} in ${todo.file}:${todo.line}`);
+                    output.push(`- ${todo.content}`);
                 }
                 output.push('\r');
             }
@@ -238,14 +239,10 @@ function applyTextEdit(document, newText) {
  * @param {import('vscode').ExtensionContext} context - The VSCode extension context
  */
 export async function activate(context) {
-    
-
     async function processDocument(document) {
         if (!document.fileName.endsWith('.taskp')) return;
 
         const parser = new TaskpieaParser();
-
-        //const parsed = parser.parse(document);
         parser.parse(document);
         const keywords = parser.settings['todoKeywords']?.split(',').map(k => k.trim()) || ['TODO', 'FIXME'];
         const excludePatterns = parser.settings['excludePatterns']?.split(',').map(p => p.trim()) || ['**/*.taskp'];
@@ -282,7 +279,6 @@ export async function activate(context) {
                     const line = document.lineAt(position.line).text.substring(0, position.character);
                     if (!line.includes('@')) return [];
 
-                    //const parsed = parser.parse(document);
                     const parser = new TaskpieaParser();
                     return parser.users.map(user => {
                         const item = new vscode.CompletionItem(user, vscode.CompletionItemKind.User);
