@@ -270,6 +270,16 @@ export function activate(context) {
             '@'
         )
     );
+
+    // Run parser on currently open .taskp files when extension activates
+    const openDocuments = vscode.workspace.textDocuments;
+    for (const document of openDocuments) {
+        if (document.fileName.endsWith('.taskp')) {
+            const parsed = parser.parse(document);
+            const updatedText = generateUpdatedText(parsed, document);
+            applyTextEdit(document, updatedText);
+        }
+    }
 }
 
 export function deactivate() { }
