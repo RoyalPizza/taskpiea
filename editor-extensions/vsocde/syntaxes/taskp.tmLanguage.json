@@ -1,0 +1,25 @@
+{
+    "name": "Taskpiea",
+    "scopeName": "source.taskp",
+    "fileTypes": [
+        ".taskp"
+    ],
+    "patterns": [
+        {
+            "match": "\\[([#][A-Z0-9]{5})\\]",
+            "captures": {
+                "1": {
+                    "name": "string.quoted"
+                }
+            }
+        },
+        {
+            "match": "\\[(\\w+)\\]",
+            "captures": {
+                "1": {
+                    "name": "string.quoted"
+                }
+            }
+        }
+    ]
+}

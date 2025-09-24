@@ -17,6 +17,13 @@
                 "extensions": [".taskp"],
                 "configuration": "./language-configuration.json"
             }
+        ],
+        "grammars": [
+            {
+                "language": "taskp",
+                "scopeName": "source.taskp",
+                "path": "./syntaxes/taskp.tmLanguage.json"
+            }
         ]
     }
 }

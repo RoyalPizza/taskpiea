@@ -1,23 +1,21 @@
 # v1
-- remove all triming of lines from codebase. Regex must work with this change.
 - auto add settings. on any interaction if some settings do not exist, re add them with default value. Settings section must always exist.
     - note... right now only lastId is a setting. In the future there will be more.
-- add color support
-    - section headers should be yellow
-    - task IDs should be orange
 - ensure extension is fine with non required sections being deleted
     - TASKS, TODO, BUGS, USERS
     - basicaly if a section is deleted, that feature wont be supported. But it cannot crash the extension.
 
 # v2
 - add suppport for users
-    - provide intelisense so that as soon as @ is typed, it shows suggestions from the users list
     - @username needs to be colored lime
+- use varied colors for the highlighting
+- add support for descriptions/comments
+- use a different ID genration system
+    - the issue is that the IDs only increment by 1, and they are so similar they do not pop
+    - find a way to keep it to 5 character hex, keep the IDs simple, but generate more unique entries
 
 # v3
 - add TODOS support. This feature needs to thought out. But it will be similar to other extensions. I need to write out tasks here.
-
-# v4
 - add BUGS support. This feature needs to thought out. But it will be similar to other extensions. I need to write out tasks here.
 
 # FINAL VERSION
