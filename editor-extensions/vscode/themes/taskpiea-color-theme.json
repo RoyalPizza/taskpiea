@@ -2,7 +2,7 @@
     "$schema": "vscode://schemas/color-theme",
     "name": "Taskpiea",
     "type": "dark",
-    "semanticHighlighting": true,
+    // "semanticHighlighting": true,
     "colors": {
         "titleBar.activeBackground": "#2F2D28",
         "sideBar.background": "#2F2D28",
@@ -33,10 +33,10 @@
             }
         },
         {
-            "name": "Defines",
+            "name": "Preprocessor",
             "scope": [
-                "meta.preprocessor.define",
-                "entity.name.function.preprocessor"
+                "meta.preprocessor",
+                "meta.preprocessor.define"
             ],
             "settings": {
                 "foreground": "#aabe8c"
@@ -60,7 +60,6 @@
         },
         {
             "scope": [
-                "keyword",
                 "storage.type"
             ],
             "settings": {
