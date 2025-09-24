@@ -1,22 +1,15 @@
 # v1
 - auto add settings. on any interaction if some settings do not exist, re add them with default value. Settings section must always exist.
-    - note... right now only lastId is a setting. In the future there will be more.
-- ensure extension is fine with non required sections being deleted
-    - TASKS, TODO, BUGS, USERS
-    - basicaly if a section is deleted, that feature wont be supported. But it cannot crash the extension.
+- @username needs to be colored
+- add support for descriptions/comments
+- run parse on file open
+- detect duplicate task id's and replace them with new ones
+- make any line with -- be considered a "comment"
 
 # v2
-- add suppport for users
-    - @username needs to be colored lime
-- use varied colors for the highlighting
-- add support for descriptions/comments
-- use a different ID genration system
-    - the issue is that the IDs only increment by 1, and they are so similar they do not pop
-    - find a way to keep it to 5 character hex, keep the IDs simple, but generate more unique entries
-
-# v3
 - add TODOS support. This feature needs to thought out. But it will be similar to other extensions. I need to write out tasks here.
 - add BUGS support. This feature needs to thought out. But it will be similar to other extensions. I need to write out tasks here.
+- use varied colors for the highlighting
 
 # FINAL VERSION
 - move to its own repo and update package.json

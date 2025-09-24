@@ -17,7 +17,7 @@ class TaskpieaParser {
         this.tasks = [];
         this.users = [];
         this.settings = {};
-        this.lastId = 0;
+        this.usedIds = new Set();
     }
 
     reset() {
@@ -25,13 +25,20 @@ class TaskpieaParser {
         this.tasks = [];
         this.users = [];
         this.settings = {};
-        this.lastId = MIN_ID;
+        this.usedIds = new Set();
     }
 
     generateId() {
-        this.lastId++;
-        if (this.lastId > MAX_ID) this.lastId = MIN_ID;
-        return this.lastId.toString(16).padStart(5, '0').toUpperCase();
+        let id;
+        do {
+            // Generate random 5-char hex ID (0-FFFFF)
+            id = Math.floor(Math.random() * (MAX_ID + 1))
+                .toString(16)
+                .padStart(5, '0')
+                .toUpperCase();
+        } while (this.usedIds.has(id));
+        this.usedIds.add(id);
+        return id;
     }
 
     /**
@@ -69,7 +76,6 @@ class TaskpieaParser {
             }
         }
 
-        this.settings['lastId'] = this.lastId.toString(16).padStart(5, '0').toUpperCase();
         return { tasks: this.tasks, users: this.users, settings: this.settings };
     }
 
@@ -88,11 +94,8 @@ class TaskpieaParser {
             const taskName = taskMatch[1]; // keep untrimmed for consistency
             const taskId = taskMatch[2] || this.generateId();
             this.tasks.push({ name: taskName, id: taskId });
-
-            // ensure our lastId is still the largest
             if (taskMatch[2]) {
-                const id = parseInt(taskMatch[2], 16);
-                if (id > this.lastId) this.lastId = id;
+                this.usedIds.add(taskMatch[2]);
             }
         }
     }
@@ -153,7 +156,7 @@ function generateUpdatedText(parsed, document) {
         // process tasks
         if (currentSection === SECTIONS.TASKS && line.match(/^\s*- /)) {
             const taskMatch = line.match(/^\s*- (.+?)(?: \[#([A-Z0-9]{5})\])?\s*$/);
-            if (!taskMatch || taskIndex > parsed.tasks.length) {
+            if (!taskMatch || taskIndex >= parsed.tasks.length) {
                 // Invalid task format, preserve original and go next
                 // TODO: maybe in v2 we can add a "red squiggle" to say error or something
                 output.push(line);
