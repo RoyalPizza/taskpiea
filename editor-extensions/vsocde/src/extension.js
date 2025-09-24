@@ -30,7 +30,7 @@ class TaskpieaParser {
 
     generateId() {
         this.lastId++;
-        if (this.lastId >= MAX_ID) this.lastId = MIN_ID;
+        if (this.lastId > MAX_ID) this.lastId = MIN_ID;
         return this.lastId.toString(16).padStart(5, '0').toUpperCase();
     }
 
@@ -43,14 +43,16 @@ class TaskpieaParser {
         const lines = document.getText().split('\n');
 
         for (let i = 0; i < lines.length; i++) {
-            const line = lines[i].trim();
-            if (!line) continue; // empty line, go next
+            let line = lines[i];
+            line = line.replace(/\r/g, "");
 
-            // find matches for words between []
-            // ^ = start of line
-            // (\w+) = get words (between the [])
-            // $ = ensure end of line
-            const sectionMatch = line.match(/^\[(\w+)\]$/);
+            if (line.trim() === "") continue; // empty line or whitespace only, go next
+
+            // find matches for words between [], allowing leading/trailing whitespace
+            // ^\s* = optional leading whitespace
+            // \[(\w+)\] = section name between []
+            // \s*$ = optional trailing whitespace
+            const sectionMatch = line.match(/^\s*\[(\w+)\]\s*$/);
             if (sectionMatch && SECTIONS[sectionMatch[1]]) {
                 this.currentSection = SECTIONS[sectionMatch[1]];
                 continue; // this was a section line, go next
@@ -58,11 +60,11 @@ class TaskpieaParser {
 
             if (this.currentSection === SECTIONS.NONE) {
                 continue; // not in a section, go next
-            } else if (this.currentSection === SECTIONS.TASKS && line.startsWith('- ')) {
+            } else if (this.currentSection === SECTIONS.TASKS && line.match(/^\s*- /)) {
                 this.parseTask(line);
             } else if (this.currentSection === SECTIONS.SETTINGS && line.includes(':')) {
                 this.parseSetting(line);
-            } else if (this.currentSection === SECTIONS.USERS && line.startsWith('- ')) {
+            } else if (this.currentSection === SECTIONS.USERS && line.match(/^\s*- /)) {
                 this.parseUser(line);
             }
         }
@@ -76,13 +78,14 @@ class TaskpieaParser {
     */
     parseTask(line) {
         // find matches in task line starting with "- ", capturing task name and optional task ID
+        // ^\s* = optional leading whitespace
         // - = literal bullet point
         // (.+?) = task name (non-greedy)
         // (?: \[#([A-Z0-9]{5})\])? = optional task ID in [#XXXXX] format, 5 alphanumeric chars
-        // $ = ensure end of line
-        const taskMatch = line.match(/- (.+?)(?: \[#([A-Z0-9]{5})\])?$/);
+        // \s*$ = optional trailing whitespace
+        const taskMatch = line.match(/^\s*- (.+?)(?: \[#([A-Z0-9]{5})\])?\s*$/);
         if (taskMatch) {
-            const taskName = taskMatch[1].trim();
+            const taskName = taskMatch[1]; // keep untrimmed for consistency
             const taskId = taskMatch[2] || this.generateId();
             this.tasks.push({ name: taskName, id: taskId });
 
@@ -112,7 +115,8 @@ class TaskpieaParser {
     * @param {string} line - The task line to parse from a .taskp file
     */
     parseUser(line) {
-        this.users.push(line.substring(2).trim());
+        // remove leading "- " and keep untrimmed content
+        this.users.push(line.replace(/^\s*- /, ''));
     }
 }
 
@@ -122,12 +126,10 @@ class TaskpieaParser {
  * @returns {string} Updated text with task IDs added where missing
  */
 function generateUpdatedText(parsed, document) {
-
     // TODO: consider if its worth double parsing. We parse once to put a bunch of objects in memory
     // then again to update the doc. Essentially looping through the whole document twice. For now, leave
     // as is. But after adding other features, see if we can limit this to one. Not sure I can do that yet 
     // until I add the other features.
-
     // TODO: decide why this should be seperate from parser. Right now it makes no sense. it should just return the text.
     // in the future that may not be true though, it just depends how "VSCode" integration works for things like
     // red squiggles, autocomplete, etc..
@@ -136,12 +138,12 @@ function generateUpdatedText(parsed, document) {
     let output = [];
     let currentSection = SECTIONS.NONE;
     let taskIndex = 0; // a gimmicky way to quick index into the tasks array without doing a lookup
-    let settingsFound = false;
 
     for (let line of lines) {
+        line = line.replace(/\r/g, "");
+
         // determine section
-        const trimmedLine = line.trim();
-        const sectionMatch = trimmedLine.match(/^\[(\w+)\]$/);
+        const sectionMatch = line.match(/^\s*\[(\w+)\]\s*$/);
         if (sectionMatch && SECTIONS[sectionMatch[1]]) {
             currentSection = SECTIONS[sectionMatch[1]];
             output.push(line);
@@ -149,8 +151,8 @@ function generateUpdatedText(parsed, document) {
         }
 
         // process tasks
-        if (currentSection === SECTIONS.TASKS && trimmedLine.startsWith('- ')) {
-            const taskMatch = trimmedLine.match(/- (.+?)(?: \[#([A-Z0-9]{5})\])?$/);
+        if (currentSection === SECTIONS.TASKS && line.match(/^\s*- /)) {
+            const taskMatch = line.match(/^\s*- (.+?)(?: \[#([A-Z0-9]{5})\])?\s*$/);
             if (!taskMatch || taskIndex > parsed.tasks.length) {
                 // Invalid task format, preserve original and go next
                 // TODO: maybe in v2 we can add a "red squiggle" to say error or something
@@ -161,14 +163,12 @@ function generateUpdatedText(parsed, document) {
             // Only add ID to task if missing, otherwise preserve original
             const task = parsed.tasks[taskIndex++];
             if (!taskMatch[2]) {
-                output.push(`${trimmedLine} [#${task.id}]`);
+                output.push(`${line} [#${task.id}]`);
             } else {
                 output.push(line);
             }
-        }
-
-        // no need to process, go next
-        else {
+        } else {
+            // no need to process, go next
             output.push(line);
         }
     }
@@ -185,7 +185,6 @@ function applyTextEdit(document, newText) {
     edit.replace(document.uri, fullRange, newText);
     vscode.workspace.applyEdit(edit);
 }
-
 
 /**
  * @param {import('vscode').ExtensionContext} context - The VSCode extension context
