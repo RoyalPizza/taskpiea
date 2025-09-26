@@ -8,13 +8,17 @@
         "vscode": "^1.80.0"
     },
     "type": "module",
-    "categories": ["Other"],
+    "categories": [
+        "Other"
+    ],
     "main": "./src/extension.js",
     "contributes": {
         "languages": [
             {
                 "id": "taskp",
-                "extensions": [".taskp"],
+                "extensions": [
+                    ".taskp"
+                ],
                 "configuration": "./language-configuration.json"
             }
         ],
@@ -30,6 +34,16 @@
                 "command": "taskpiea.jumpToIssue",
                 "title": "Taskpiea: Jump to Issue"
             }
-        ]
+        ],
+        "configurationDefaults": {
+            "[taskp]": {
+                "editor.wordBasedSuggestions": "off",
+                "editor.quickSuggestions": {
+                    "other": false,
+                    "comments": false,
+                    "strings": false
+                }
+            }
+        }
     }
 }

@@ -86,7 +86,6 @@ export class Parser {
                     break;
                 case core.SECTIONS.ISSUES:
                     if (!useScanner) {
-                        this._parseIssue(line, i);
                         this.textData.push(line);
                     } else {
                         this.textData.push('');
@@ -143,24 +142,6 @@ export class Parser {
     }
 
     /**
-     * Attempts to parse an inline issue reference from a line of text.
-     * Only used when the scanner is disabled. If a match is found, an
-     * issue decorator is created for the given line.
-     *
-     * @param {string} line - The line of text to check for an issue reference.
-     * @param {number} lineNumber - The line number in the document.
-     */
-    _parseIssue(line, lineNumber) {
-        // This is only called if we are not using the scanner. 
-        // This will create decorators based on the line text.
-
-        const issueMatch = line.match(/\[([^\[\]:]+)::(\d+)\]/);
-        if (issueMatch) {
-            this._createIssueDecorator(line, lineNumber, issueMatch[1], issueMatch[2])
-        }
-    }
-
-    /**
     * @param {string} line - The user line to parse from a .taskp file
     */
     _parseUser(line) {
@@ -189,43 +170,5 @@ export class Parser {
         if (this.issuesLineNumber === -1 || !scanData?.issues) return;
         const issues = scanData.issues.map(issue => `- ${issue.content} [${issue.file}::${issue.lineNumber}]`);
         this.textData.splice(this.issuesLineNumber + 1, 0, ...issues);
-
-        // create issue decorators from the issues. apply them with applyIssueDecorators
-        for (let i = 0; i < scanData.issues.length; i++) {
-            const issue = scanData.issues[i];
-            const fullLine = `- ${issue.content} [${issue.file}::${issue.lineNumber}]`; // this is duplicate code
-            this._createIssueDecorator(fullLine, this.issuesLineNumber + 1 + i, issue.file, issue.lineNumber);
-        }
-    }
-
-    /**
-     * Creates a single issue decoration for a line in a document.
-     * The decoration is not applied immediately; it is stored in `this.issueDecorationOptions`
-     * and can be applied later in bulk using `applyIssueDecorators`.
-     *
-     * @param {string} documentLine - The text content of the line to decorate.
-     * @param {number} documentLineNumber - The 0-based line number in the document.
-     * @param {string} issueFile - The filename of the issue target.
-     * @param {number} issueLineNumber - The line number in the target file.
-     */
-    _createIssueDecorator(documentLine, documentLineNumber, issueFile, issueLineNumber) {
-        const range = new vscode.Range(documentLineNumber, 0, documentLineNumber, documentLine.length);
-        const uriComponent = encodeURIComponent(JSON.stringify([issueFile, issueLineNumber]));
-        const hoverMessage = new vscode.MarkdownString(`[Jump to ${issueFile}:${issueLineNumber}](command:${core.COMMAND_JUMP_TO_ISSUE}?${uriComponent})`);
-        this.issueDecorationOptions.push({ range, hoverMessage });
-    }
-
-    /**
-     * Applies all stored issue decorations to a document.
-     * Creates a decoration type for clickable underlines and applies
-     * the accumulated `issueDecorationOptions` to all visible editors
-     * displaying the document.
-     *
-     * @param {import('vscode').TextDocument} document - The VSCode document to decorate.
-     */
-    applyIssueDecorators(document) {
-
-        const editors = vscode.window.visibleTextEditors.filter(editor => editor.document === document);
-        editors.forEach(editor => editor.setDecorations(core.ISSUE_DECORATION_TYPE, this.issueDecorationOptions));
     }
 }

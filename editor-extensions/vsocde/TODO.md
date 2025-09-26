@@ -7,6 +7,7 @@
 - add BUGS support. This feature needs to thought out. But it will be similar to other extensions. I need to write out tasks here.
 - use varied colors for the highlighting
 - create command to create new taskp file
+- create command that for runs scanner
 
 - move to its own repo and update package.json
 - update readme to be an actual guide

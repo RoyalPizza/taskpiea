@@ -1,7 +1,23 @@
+/**
+ * issueLens.js
+ *
+ * Provides CodeLens functionality for Taskpiea `.taskp` documents.
+ *
+ * Each line containing an issue reference in the form `[filename::line]`
+ * will have a CodeLens rendered above it, allowing the user to jump
+ * directly to the target file and line when clicked.
+ *
+ * The CodeLens passes the filename and line number as arguments
+ * to the registered `COMMAND_JUMP_TO_ISSUE` command.
+ *
+ * This class does not modify the document content; it only provides
+ * interactive UI elements for navigation within the VSCode editor.
+ */
+
 import * as vscode from 'vscode';
 import * as core from './core.js';
 
-export class TaskpCodeLensProvider {
+export class IssueLens {
 
     /**
      * Provide CodeLenses for a document.
