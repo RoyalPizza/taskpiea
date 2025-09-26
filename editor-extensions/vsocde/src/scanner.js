@@ -65,8 +65,6 @@ export class Scanner {
                 for (const keyword of keywords) {
                     if (line.includes(keyword)) {
                         const issue = { keyword, file: relativePath, lineNumber: i, content: line.trim() };
-                        
-                        //issue.range = new vscode.Range(newIssueLineNumber, 0, newIssueLineNumber, fullLine.length);
                         newIssueLineNumber++;
                         issues.push(issue);
                         break;

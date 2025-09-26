@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import * as core from './core.js';
 import * as tpParser from './parser.js';
 import * as tpScanner from './scanner.js';
-import * as tpLens from './codeLensProvider.js'
+import * as tpLens from './codeLens.js'
 
 /** @type {Set<string>} Tracks files currently being processed */
 const processingFiles = new Set();
@@ -23,44 +23,15 @@ export async function activate(context) {
 
     context.subscriptions.push(
         vscode.languages.registerCodeLensProvider(
-            { pattern: `**/*${core.FILE_EXTENSION}` },  // applies to .taskp files
-            new tpLens.TaskpCodeLensProvider()
+            { pattern: `**/*${core.FILE_EXTENSION}` },
+            new tpLens.IssueLens()
         )
     );
-
-    // vscode.languages.registerDefinitionProvider(
-    //     { pattern: '**/*.taskp' }, // applies to all .taskp files
-    //     {
-    //         provideDefinition(document, position) {
-    //             const lineNum = position.line;
-    //             const lineText = document.lineAt(lineNum).text;
-
-    //             // Check if the line contains an issue reference
-    //             const match = lineText.match(/\[([^\[\]:]+)::(\d+)\]/);
-    //             if (!match) return;
-
-    //             const [_, file, lineStr] = match;
-    //             const lineNumber = parseInt(lineStr, 10);
-
-    //             const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
-    //             if (!workspaceFolder) return;
-
-    //             const targetUri = vscode.Uri.joinPath(workspaceFolder.uri, file);
-
-    //             // Make the entire line clickable
-    //             const fullLineRange = new vscode.Range(lineNum, 0, lineNum, lineText.length);
-
-    //             return new vscode.Location(targetUri, fullLineRange);
-    //         }
-
-    //     }
-    // );
 
     vscode.commands.registerCommand(core.COMMAND_JUMP_TO_ISSUE, async (file, line) => {
         const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
         if (!workspaceFolder) return;
         let fileUri = vscode.Uri.joinPath(workspaceFolder.uri, file);
-
 
         const document = await vscode.workspace.openTextDocument(fileUri);
         await vscode.window.showTextDocument(document, {
@@ -74,7 +45,6 @@ export async function activate(context) {
             // TODO: reset our scanner because the workspace changed?
             const openDocuments = vscode.workspace.textDocuments;
             for (const document of openDocuments) {
-                //console.log("onDidChangeWorkspaceFolders " + document.fileName);
                 if (!document.fileName.endsWith(core.FILE_EXTENSION)) return;
                 await _processDocument(document, true);
             }
@@ -83,8 +53,7 @@ export async function activate(context) {
 
     context.subscriptions.push(
         vscode.workspace.onDidOpenTextDocument(document => {
-            // this event fires when our code runs the scanner
-            //console.log("onDidOpenTextDocument + " + document.fileName);
+            // Dev Note: the scanner causes this event fire when it opens a document to scan code.
             if (!document.fileName.endsWith(core.FILE_EXTENSION)) return;
             _processDocument(document, false);
         })
@@ -92,13 +61,11 @@ export async function activate(context) {
 
     context.subscriptions.push(
         vscode.workspace.onDidSaveTextDocument(document => {
-            //console.log("onDidSaveTextDocument + " + document.fileName);
             if (!document.fileName.endsWith(core.FILE_EXTENSION)) return;
             _processDocument(document, false);
         })
     );
 
-    // TODO: bring back auto task Id generation on pressing return. But dont rescan the TODOs.
     context.subscriptions.push(
         vscode.workspace.onDidChangeTextDocument(event => {
             if (!event.document.fileName.endsWith(core.FILE_EXTENSION)) return;
@@ -136,7 +103,6 @@ async function _processDocument(document, useScanner) {
     if (!document.fileName.endsWith(core.FILE_EXTENSION)) return;
     if (processingFiles.has(document.fileName)) return;
     processingFiles.add(document.fileName);
-    //console.log("processing " + document.fileName);
 
     const parser = new tpParser.Parser();
     parser.parse(document, useScanner);
@@ -145,12 +111,10 @@ async function _processDocument(document, useScanner) {
         let scanData = await scanner.scan(document.fileName, parser.settings, parser.issuesLineNumber);
         parser.addScanData(scanData)
     }
+    _cacheUsersForAutocomplete(document.fileName, parser.users);
 
     const text = parser.textData.join('\n');
     await _applyTextEdit(document, text);
-
-    //parser.applyIssueDecorators(document);
-    _cacheUsersForAutocomplete(document.fileName, parser.users);
 
     processingFiles.delete(document.fileName);
 }
@@ -206,7 +170,6 @@ function _cacheUsersForAutocomplete(filename, users) {
         item.insertText = user;
         completionItems.push(item);
     }
-
     userCompletionItems.set(filename, completionItems);
 }
 
@@ -224,7 +187,6 @@ function _cacheUsersForAutocomplete(filename, users) {
 function _provideCompletionItems(document, position) {
     const line = document.lineAt(position.line).text.substring(0, position.character);
     if (!line.includes('@')) return [];
-    //console.log("registerCompletionItemProvider");
     const items = userCompletionItems.get(document.fileName) || [];
     return [...items];
 }
@@ -239,7 +201,6 @@ function _provideCompletionItems(document, position) {
  */
 function _processDocumentChanges(document, changes) {
     if (changes.length === 0) return;
-    //console.log("onDidChangeTextDocument + " + document.fileName);
     for (const change of changes) {
         if (change.text.includes('\n')) {
             _processDocument(document, false);
