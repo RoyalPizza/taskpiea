@@ -80,6 +80,8 @@ export class Parser {
                     // TODO: Decide if we build text decorators here or not
                     if (!useScanner) {
                         this.textData.push(line);
+                    } else {
+                        this.textData.push('');
                     }
                     break;
                 case core.SECTIONS.USERS:
@@ -116,12 +118,11 @@ export class Parser {
             if (taskId && this.usedIds.has(taskId)) {
                 // duplicate ID, generate new one
                 taskId = this._generateId();
-                this.textData.push(`${line} [#${taskId}]`);
+                this.textData.push(line.replace(/\[#[A-Z0-9]{5}\]/, `[#${taskId}]`));
             } else if (!taskId) {
                 // no ID, generate one
                 taskId = this._generateId();
                 this.textData.push(`${line} [#${taskId}]`);
-                //output.push(line.replace(/\[#[A-Z0-9]{5}\]/, `[#${task.id}]`));
             } else {
                 this.usedIds.add(taskId);
                 this.textData.push(line);
@@ -154,17 +155,13 @@ export class Parser {
         this.settings.push({ key: key, value: value });
     }
 
+    /**
+     * Inserts scanned issues into the text data at the designated issues line.
+     * @param {{ issues: { keyword: string, file: string, line: number, content: string, range?: vscode.Range }[] }} scanData - Object containing an array of issues returned from `scan`.
+     */
     addScanData(scanData) {
         if (this.issuesLineNumber === -1 || !scanData?.issues) return;
-        
         const issues = scanData.issues.map(issue => `- ${issue.content}`);
         this.textData.splice(this.issuesLineNumber + 1, 0, ...issues);
-        
-        // TODO: remove this comment once scanner is up. 
-        // TODO: Decide if we insert scanner data now or later
-        // for (const todo of parsedData.todos) {
-        //     output.push(`- ${todo.content}`);
-        // }
-        // output.push('\r');
     }
 }
