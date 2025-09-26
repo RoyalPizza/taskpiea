@@ -24,6 +24,12 @@
                 "scopeName": "source.taskp",
                 "path": "./syntaxes/taskp.tmLanguage.json"
             }
+        ],
+        "commands": [
+            {
+                "command": "taskpiea.jumpToIssue",
+                "title": "Taskpiea: Jump to Issue"
+            }
         ]
     }
 }
