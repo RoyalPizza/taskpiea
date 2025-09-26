@@ -6,7 +6,7 @@
  */
 
 import * as vscode from 'vscode';
-import * as core from 'core.js';
+import * as core from './core.js';
 
 export class Scanner {
 
@@ -46,22 +46,23 @@ export class Scanner {
             excludePatterns.push('*.taskp');
         }
 
+        // we need to keep a line number with our TODO in the taskp file for vscode decorators
+        let newIssueLineNumber = issuesLineNumber + 1;
+
         const files = await vscode.workspace.findFiles('**/*', `{${excludePatterns.join(',')}}`);
         for (const file of files) {
             const document = await vscode.workspace.openTextDocument(file);
-            const text = doc.getText().split(/\r?\n/);
+            const text = document.getText().split(/\r?\n/);
             for (let i = 0; i < text.length; i++) {
                 const line = text[i];
                 for (const keyword of keywords) {
                     if (line.includes(keyword)) {
                         const content = line.trim();
-                        const todo = { keyword, file: file.fsPath, line: i + 1, content };
-                        if (issuesLineNumber < document.lineCount) {
-                            const fullLine = `- ${content}`;
-                            todo.range = new vscode.Range(issuesLineNumber, 0, issuesLineNumber, fullLine.length);
-                            issuesLineNumber++;
-                        }
-                        issues.push(todo);
+                        const issue = { keyword, file: file.fsPath, line: i + 1, content };
+                        const fullLine = `- ${content}`;
+                        issue.range = new vscode.Range(newIssueLineNumber, 0, newIssueLineNumber, fullLine.length);
+                        newIssueLineNumber++;
+                        issues.push(issue);
                     }
                 }
             }

@@ -5,8 +5,8 @@
  * Use the scanner.js to scan codebases and insert them as issues here.
  */
 
-import { TextDocument } from 'vscode';
-import * as core from 'core.js';
+import * as vscode from 'vscode';
+import * as core from './core.js';
 
 // TODO: consider storing usedIds as ints for faster lookup over the hex string? (future)
 // TODO: update parse function to know if issues should be kept or removed (aka, will scanner be re adding them after)
@@ -65,7 +65,7 @@ export class Parser {
             if (sectionMatch && core.SECTIONS[sectionMatch[1]]) {
                 currentSection = core.SECTIONS[sectionMatch[1]];
                 this.textData.push(line);
-                if (currentSection === core.SECTIONS.ISSUES) issuesLineIndex = i;
+                if (currentSection === core.SECTIONS.ISSUES) this.issuesLineNumber = i;
                 continue;
             }
 
@@ -128,6 +128,8 @@ export class Parser {
             }
 
             this.tasks.push({ name: taskName, id: taskId });
+        } else {
+            this.textData.push(line);
         }
     }
 
@@ -153,9 +155,11 @@ export class Parser {
     }
 
     addScanData(scanData) {
-        if (this.issuesLineNumber === -1) return;
-
-        // TODO: 
+        if (this.issuesLineNumber === -1 || !scanData?.issues) return;
+        
+        const issues = scanData.issues.map(issue => `- ${issue.content}`);
+        this.textData.splice(this.issuesLineNumber + 1, 0, ...issues);
+        
         // TODO: remove this comment once scanner is up. 
         // TODO: Decide if we insert scanner data now or later
         // for (const todo of parsedData.todos) {
