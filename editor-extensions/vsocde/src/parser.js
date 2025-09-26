@@ -211,7 +211,7 @@ export class Parser {
     _createIssueDecorator(documentLine, documentLineNumber, issueFile, issueLineNumber) {
         const range = new vscode.Range(documentLineNumber, 0, documentLineNumber, documentLine.length);
         const uriComponent = encodeURIComponent(JSON.stringify([issueFile, issueLineNumber]));
-        const hoverMessage = new vscode.MarkdownString(`[Jump to ${issueFile}:${issueLineNumber}](${core.COMMAND_JUMP_TO_ISSUE}?${uriComponent})`);
+        const hoverMessage = new vscode.MarkdownString(`[Jump to ${issueFile}:${issueLineNumber}](command:${core.COMMAND_JUMP_TO_ISSUE}?${uriComponent})`);
         this.issueDecorationOptions.push({ range, hoverMessage });
     }
 

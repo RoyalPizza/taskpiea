@@ -21,23 +21,53 @@ let userCompletionItems = new Map();
 export async function activate(context) {
     console.log("activate");
 
-    // context.subscriptions.push(
-    //     vscode.languages.registerCodeLensProvider(
-    //         { pattern: '**/*.taskp' },  // applies to .taskp files
-    //         new tpLens.TaskpCodeLensProvider()
-    //     )
+    context.subscriptions.push(
+        vscode.languages.registerCodeLensProvider(
+            { pattern: `**/*${core.FILE_EXTENSION}` },  // applies to .taskp files
+            new tpLens.TaskpCodeLensProvider()
+        )
+    );
+
+    // vscode.languages.registerDefinitionProvider(
+    //     { pattern: '**/*.taskp' }, // applies to all .taskp files
+    //     {
+    //         provideDefinition(document, position) {
+    //             const lineNum = position.line;
+    //             const lineText = document.lineAt(lineNum).text;
+
+    //             // Check if the line contains an issue reference
+    //             const match = lineText.match(/\[([^\[\]:]+)::(\d+)\]/);
+    //             if (!match) return;
+
+    //             const [_, file, lineStr] = match;
+    //             const lineNumber = parseInt(lineStr, 10);
+
+    //             const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+    //             if (!workspaceFolder) return;
+
+    //             const targetUri = vscode.Uri.joinPath(workspaceFolder.uri, file);
+
+    //             // Make the entire line clickable
+    //             const fullLineRange = new vscode.Range(lineNum, 0, lineNum, lineText.length);
+
+    //             return new vscode.Location(targetUri, fullLineRange);
+    //         }
+
+    //     }
     // );
 
-    // TODO: review this
-    // context.subscriptions.push(
-    //     vscode.commands.registerCommand('taskpiea.jumpToTodo', async (args) => {
-    //         const [file, line] = Array.isArray(args) ? args : JSON.parse(args);
-    //         const document = await vscode.workspace.openTextDocument(file);
-    //         await vscode.window.showTextDocument(document, {
-    //             selection: new vscode.Range(line - 1, 0, line - 1, 0)
-    //         });
-    //     })
-    // );
+    vscode.commands.registerCommand(core.COMMAND_JUMP_TO_ISSUE, async (file, line) => {
+        const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+        if (!workspaceFolder) return;
+        let fileUri = vscode.Uri.joinPath(workspaceFolder.uri, file);
+
+
+        const document = await vscode.workspace.openTextDocument(fileUri);
+        await vscode.window.showTextDocument(document, {
+            selection: new vscode.Range(line, 0, line + 1, 0)
+        });
+    });
+
 
     context.subscriptions.push(
         vscode.workspace.onDidChangeWorkspaceFolders(async () => {
@@ -71,7 +101,7 @@ export async function activate(context) {
     // TODO: bring back auto task Id generation on pressing return. But dont rescan the TODOs.
     context.subscriptions.push(
         vscode.workspace.onDidChangeTextDocument(event => {
-            if (!event.document.fileName.endsWith('.taskp')) return;
+            if (!event.document.fileName.endsWith(core.FILE_EXTENSION)) return;
             _processDocumentChanges(event.document, event.contentChanges);
         })
     );
@@ -115,11 +145,11 @@ async function _processDocument(document, useScanner) {
         let scanData = await scanner.scan(document.fileName, parser.settings, parser.issuesLineNumber);
         parser.addScanData(scanData)
     }
-    
+
     const text = parser.textData.join('\n');
     await _applyTextEdit(document, text);
 
-    parser.applyIssueDecorators(document);
+    //parser.applyIssueDecorators(document);
     _cacheUsersForAutocomplete(document.fileName, parser.users);
 
     processingFiles.delete(document.fileName);

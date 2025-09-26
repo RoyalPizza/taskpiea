@@ -14,7 +14,7 @@ export const MAX_ID = 1048575;
 export const FILE_EXTENSION = ".taskp";
 
 /** @type {string} Command identifier for jumping to an issue in a `.taskp` file. */
-export const COMMAND_JUMP_TO_ISSUE = 'command:taskpiea.jumpToIssue';
+export const COMMAND_JUMP_TO_ISSUE = 'taskpiea.jumpToIssue';
 
 /** @type {vscode.TextEditorDecorationType} Decoration style applied to issues (underline + pointer cursor). */
 export const ISSUE_DECORATION_TYPE = vscode.window.createTextEditorDecorationType({ 
