@@ -7,9 +7,6 @@ import * as tpScanner from './scanner.js';
 //       perhaps just make a system that states a "process operation" is underway and ignore future requests?
 //       or just que them.
 
-/** @param {import('tpScanner').Scanner} - TBD */
-let scanner;
-
 /** 
  * Caches vscode.CompletionItem arrays for each Taskp file.
  * @type {Map<string, vscode.CompletionItem[]>}
@@ -21,7 +18,6 @@ let userCompletionItems = new Map();
  */
 export async function activate(context) {
     console.log("activate");
-    scanner = new tpScanner.Scanner();
 
     // TODO: review this
     // context.subscriptions.push(
@@ -88,7 +84,6 @@ export async function activate(context) {
 
 export function deactivate() {
     console.log("deactivate");
-    scanner = null;
 }
 
 /**
@@ -105,6 +100,7 @@ async function _processDocument(document, useScanner) {
     const parser = new tpParser.Parser();
     parser.parse(document, useScanner);
     if (useScanner && parser.issuesLineNumber != -1) {
+        let scanner = new tpScanner.Scanner();
         let scanData = await scanner.scan(document.fileName, parser.settings, parser.issuesLineNumber);
         parser.addScanData(scanData)
     }
