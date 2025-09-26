@@ -27,8 +27,8 @@
         ],
         "commands": [
             {
-                "command": "taskpiea.jumpToTodo",
-                "title": "Taskpiea: Jump to TODO"
+                "command": "taskpiea.jumpToIssue",
+                "title": "Taskpiea: Jump to Issue"
             }
         ]
     }

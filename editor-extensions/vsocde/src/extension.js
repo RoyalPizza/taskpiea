@@ -2,13 +2,15 @@ import * as vscode from 'vscode';
 import * as core from './core.js';
 import * as tpParser from './parser.js';
 import * as tpScanner from './scanner.js';
+import * as tpLens from './codeLensProvider.js'
 
-// TODO: need to make there are no edcases where process document is called async on the same file, or spammed.
-//       perhaps just make a system that states a "process operation" is underway and ignore future requests?
-//       or just que them.
+/** @type {Set<string>} Tracks files currently being processed */
+const processingFiles = new Set();
 
 /** 
  * Caches vscode.CompletionItem arrays for each Taskp file.
+ * Autocompletion for users does not trigger file parsing.
+ * Instead we use this cache from the last parse.
  * @type {Map<string, vscode.CompletionItem[]>}
  */
 let userCompletionItems = new Map();
@@ -18,6 +20,13 @@ let userCompletionItems = new Map();
  */
 export async function activate(context) {
     console.log("activate");
+
+    // context.subscriptions.push(
+    //     vscode.languages.registerCodeLensProvider(
+    //         { pattern: '**/*.taskp' },  // applies to .taskp files
+    //         new tpLens.TaskpCodeLensProvider()
+    //     )
+    // );
 
     // TODO: review this
     // context.subscriptions.push(
@@ -95,6 +104,8 @@ export function deactivate() {
  */
 async function _processDocument(document, useScanner) {
     if (!document.fileName.endsWith(core.FILE_EXTENSION)) return;
+    if (processingFiles.has(document.fileName)) return;
+    processingFiles.add(document.fileName);
     //console.log("processing " + document.fileName);
 
     const parser = new tpParser.Parser();
@@ -104,13 +115,14 @@ async function _processDocument(document, useScanner) {
         let scanData = await scanner.scan(document.fileName, parser.settings, parser.issuesLineNumber);
         parser.addScanData(scanData)
     }
-
+    
     const text = parser.textData.join('\n');
     await _applyTextEdit(document, text);
 
-    // TODO: Reimplement this
-    //applyTodoDecorations(document, parser.todos);
+    parser.applyIssueDecorators(document);
     _cacheUsersForAutocomplete(document.fileName, parser.users);
+
+    processingFiles.delete(document.fileName);
 }
 
 /**
@@ -146,27 +158,6 @@ async function _applyTextEdit(document, newText) {
     const success = await vscode.workspace.applyEdit(edit);
     if (!success) console.warn("Failed to apply edit for:", document.uri.fsPath);
     return success;
-}
-
-/**
- * @param {import('vscode').TextDocument} document - The VSCode document to decorate
- * @param {{ keyword: string, file: string, line: number, content: string, range?: vscode.Range }[]} todos - Array of TODO items
- */
-function applyTodoDecorations(document, todos) {
-    const decorationType = vscode.window.createTextEditorDecorationType({
-        textDecoration: 'underline',
-        cursor: 'pointer'
-    });
-
-    const decorations = todos
-        .filter(todo => todo.range)
-        .map(todo => ({
-            range: todo.range,
-            hoverMessage: new vscode.MarkdownString(`[Jump to ${todo.file}:${todo.line}](command:taskpiea.jumpToTodo?${encodeURIComponent(JSON.stringify([todo.file, todo.line]))})`)
-        }));
-
-    const editors = vscode.window.visibleTextEditors.filter(editor => editor.document === document);
-    editors.forEach(editor => editor.setDecorations(decorationType, decorations));
 }
 
 /**
@@ -208,6 +199,14 @@ function _provideCompletionItems(document, position) {
     return [...items];
 }
 
+/**
+ * Handles text changes in a document.
+ * If any change inserts a newline, triggers a re-process of the document.
+ * Only the first newline change matters — once detected, processing runs and the rest are ignored.
+ *
+ * @param {import('vscode').TextDocument} document - The document being edited.
+ * @param {readonly import('vscode').TextDocumentContentChangeEvent[]} changes - The list of text changes.
+ */
 function _processDocumentChanges(document, changes) {
     if (changes.length === 0) return;
     //console.log("onDidChangeTextDocument + " + document.fileName);

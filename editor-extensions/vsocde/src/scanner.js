@@ -17,7 +17,7 @@ export class Scanner {
      * @param {string} fileName - The taskp filename this scan is associated with. Currently unused but may be referenced in future enhancements.
      * @param {{ key: string, value: string }[]} settings - An array of key/value pairs representing scanner settings. Keywords to scan for and exclude patterns are extracted from this.
      * @param {number} issuesLineNumber - The starting line number in the document where new issues will be inserted. If -1, scanning is skipped.
-     * @returns {Promise<{ issues: { keyword: string, file: string, line: number, content: string, range?: vscode.Range }[] }>} A promise that resolves with an object containing an array of issues found in the workspace.
+     * @returns {Promise<{ issues: { keyword: string, file: string, lineNumber: number, content: string }[] }>} A promise that resolves with an object containing an array of issues found in the workspace.
      */
     async scan(fileName, settings, issuesLineNumber) {
 
@@ -51,18 +51,25 @@ export class Scanner {
 
         const files = await vscode.workspace.findFiles('**/*', `{${excludePatterns.join(',')}}`);
         for (const file of files) {
+            const workspaceFolder = vscode.workspace.getWorkspaceFolder(file);
+            let relativePath;
+            if (workspaceFolder) {
+                relativePath = vscode.workspace.asRelativePath(file); // returns path relative to workspace
+            } else {
+                relativePath = file.fsPath; // fallback to absolute path
+            }
             const document = await vscode.workspace.openTextDocument(file);
             const text = document.getText().split(/\r?\n/);
             for (let i = 0; i < text.length; i++) {
                 const line = text[i];
                 for (const keyword of keywords) {
                     if (line.includes(keyword)) {
-                        const content = line.trim();
-                        const issue = { keyword, file: file.fsPath, line: newIssueLineNumber, content };
-                        const fullLine = `- ${content}`;
-                        issue.range = new vscode.Range(newIssueLineNumber, 0, newIssueLineNumber, fullLine.length);
+                        const issue = { keyword, file: relativePath, lineNumber: i, content: line.trim() };
+                        
+                        //issue.range = new vscode.Range(newIssueLineNumber, 0, newIssueLineNumber, fullLine.length);
                         newIssueLineNumber++;
                         issues.push(issue);
+                        break;
                     }
                 }
             }
