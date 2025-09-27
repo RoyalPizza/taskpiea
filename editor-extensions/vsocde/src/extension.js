@@ -39,6 +39,27 @@ export async function activate(context) {
         });
     });
 
+    vscode.commands.registerCommand(core.COMMAND_PROCESS_DOCUMENT, async () => {
+        const editor = vscode.window.activeTextEditor;
+        if (!editor || !editor.document.fileName.endsWith(core.FILE_EXTENSION)) return;
+        await _processDocument(editor.document, true);
+    });
+
+    vscode.commands.registerCommand(core.COMMAND_CREATE_TASKP, async () => {
+        const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+        if (!workspaceFolder) return;
+
+        const fileName = await vscode.window.showInputBox({ prompt: 'Enter .taskp file name', value: 'tasks.taskp' });
+        if (!fileName) return;
+
+        const fileUri = vscode.Uri.joinPath(workspaceFolder.uri, fileName.endsWith('.taskp') ? fileName : `${fileName}.taskp`);
+        const exampleData = core.NEW_FILE_TEXT;
+
+        await vscode.workspace.fs.writeFile(fileUri, Buffer.from(exampleData));
+        const document = await vscode.workspace.openTextDocument(fileUri);
+        await vscode.window.showTextDocument(document);
+        await _processDocument(document, true);
+    });
 
     context.subscriptions.push(
         vscode.workspace.onDidChangeWorkspaceFolders(async () => {

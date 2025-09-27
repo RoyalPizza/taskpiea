@@ -3,7 +3,12 @@
     "displayName": "Taskpiea",
     "description": "Task management for .taskp files with auto task ID generation and user autocomplete",
     "version": "1.0.0",
+    "icon": "images/icon.jpg",
     "publisher": "royalpizza",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/RoyalPizza/taskpiea.git"
+    },
     "engines": {
         "vscode": "^1.80.0"
     },
@@ -33,6 +38,14 @@
             {
                 "command": "taskpiea.jumpToIssue",
                 "title": "Taskpiea: Jump to Issue"
+            },
+            {
+                "command": "taskpiea.processDocument",
+                "title": "Taskpiea: Process Document"
+            },
+            {
+                "command": "taskpiea.createTaskpFile",
+                "title": "Taskpiea: Create New Taskp File"
             }
         ],
         "configurationDefaults": {

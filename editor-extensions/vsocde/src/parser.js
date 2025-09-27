@@ -73,7 +73,10 @@ export class Parser {
             if (sectionMatch && core.SECTIONS[sectionMatch[1]]) {
                 currentSection = core.SECTIONS[sectionMatch[1]];
                 this.textData.push(line);
-                if (currentSection === core.SECTIONS.ISSUES) this.issuesLineNumber = i;
+                if (currentSection === core.SECTIONS.ISSUES) {
+                    this.issuesLineNumber = i; 
+                    if (useScanner) this.textData.push('');
+                }
                 continue;
             }
 
@@ -88,7 +91,7 @@ export class Parser {
                     if (!useScanner) {
                         this.textData.push(line);
                     } else {
-                        this.textData.push('');
+                        // do nothing, because this section will be regenerated
                     }
                     break;
                 case core.SECTIONS.USERS:

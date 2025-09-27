@@ -1,0 +1,22 @@
+[TASKS]
+- update styling for better syntax highlighting [#CF390]
+- do a performance test on project with large codebases [#3F6A4]
+    -- record some metrics so I have an idea if I need to switch to grep or something
+- do a stress test of the exclude system for the scanner  [#85FD9]
+    -- basically make sure that it works when loosley formatted
+- make a real icon for the extension and .taskp files
+- update categories in project.json
+- make a better readme
+- move to its own repo and update package.json
+
+[ISSUES]
+
+[USERS]
+- royalpizza
+
+[SETTINGS]
+Scanner.Keyword: TODO
+Scanner.Keyword: BUGS
+Scanner.Keyword: FIXME
+Scanner.Exclude: *.md
+Scanner.Exclude: *.taskp
