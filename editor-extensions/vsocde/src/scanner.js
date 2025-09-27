@@ -51,25 +51,23 @@ export class Scanner {
 
         const files = await vscode.workspace.findFiles('**/*', `{${excludePatterns.join(',')}}`);
         for (const file of files) {
-            const workspaceFolder = vscode.workspace.getWorkspaceFolder(file);
-            let relativePath;
-            if (workspaceFolder) {
-                relativePath = vscode.workspace.asRelativePath(file); // returns path relative to workspace
-            } else {
-                relativePath = file.fsPath; // fallback to absolute path
-            }
-            const document = await vscode.workspace.openTextDocument(file);
-            const text = document.getText().split(/\r?\n/);
-            for (let i = 0; i < text.length; i++) {
-                const line = text[i];
-                for (const keyword of keywords) {
-                    if (line.includes(keyword)) {
-                        const issue = { keyword, file: relativePath, lineNumber: i, content: line.trim() };
-                        newIssueLineNumber++;
-                        issues.push(issue);
-                        break;
+            try {
+                const document = await vscode.workspace.openTextDocument(file);
+                const text = document.getText().split(/\r?\n/);
+                for (let i = 0; i < text.length; i++) {
+                    const line = text[i];
+                    for (const keyword of keywords) {
+                        if (line.includes(keyword)) {
+                            const issue = { keyword, file: vscode.workspace.asRelativePath(file), lineNumber: i, content: line.trim() };
+                            newIssueLineNumber++;
+                            issues.push(issue);
+                            break;
+                        }
                     }
                 }
+            } catch (e) {
+                // Skip non-text files (e.g., binary)
+                continue;
             }
         }
 
