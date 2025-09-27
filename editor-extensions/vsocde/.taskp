@@ -1,11 +1,14 @@
 [TASKS]
 - update styling for better syntax highlighting [#CF390]
+    -- keep the standard theming support, but add more variety
 - do a performance test on project with large codebases [#3F6A4]
     -- record some metrics so I have an idea if I need to switch to grep or something
 - do a stress test of the exclude system for the scanner  [#85FD9]
     -- basically make sure that it works when loosley formatted
 - make a real icon for the extension and .taskp files [#DE5EB]
+    -- keep the clouds and golden icon reference as a homage to skypiea
 - update categories in project.json [#1BB10]
+    -- something other than 'other' ideally
 - make a better readme [#61AE2]
 - move to its own repo and update package.json [#6428A]
 
