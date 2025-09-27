@@ -11,7 +11,7 @@ import * as core from './core.js';
 export class Scanner {
 
     /**
-     * Scan the workspace for lines containing specific keywords (TODO, FIXME, etc.) 
+     * Scan the workspace for lines containing specific keywords.
      * and generate issue objects with their location and content.
      *
      * @param {string} fileName - The taskp filename this scan is associated with. Currently unused but may be referenced in future enhancements.

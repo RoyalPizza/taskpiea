@@ -159,7 +159,8 @@ async function _applyTextEdit(document, newText) {
 
     const fullRange = new vscode.Range(
         document.positionAt(0),
-        document.positionAt(document.getText().length) // TODO: pull this from a cache instead of calling this again
+        // TODO: pull this from a cache instead of calling this again
+        document.positionAt(document.getText().length)
     );
     if (!document.validateRange(fullRange)) {
         console.warn(`Invalid edit range in ${document.uri.toString()}`);
